@@ -11,7 +11,7 @@ import java.time.LocalDate;
 @Data
 public class User {
 
-    private Integer id;
+    private long id;
     private String name;
     @Email(message = "Некорректная почта")
     @NonNull

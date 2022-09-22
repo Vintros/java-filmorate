@@ -17,41 +17,39 @@ import java.util.Map;
 @Slf4j
 public class UserController {
 
-    private final Map<Integer, User> users = new HashMap<>();
-    private Integer id = 0;
+    private final Map<Long, User> users = new HashMap<>();
+    private long id = 0;
 
     @PostMapping
-    User createUser(@Valid @RequestBody User user) {
+    public User createUser(@Valid @RequestBody User user) {
         if (users.containsKey(user.getId())) {
             throw new ExistsException("Пользователь с такой почтой уже зарегистрирован");
-        } else {
-            checkPresenceUserName(user);
-            user.setId(createId());
-            users.put(user.getId(), user);
-            log.info("Добавлен пользователь " + user);
         }
+        checkPresenceUserName(user);
+        user.setId(createId());
+        users.put(user.getId(), user);
+        log.info("Добавлен пользователь " + user);
         return user;
     }
 
     @PutMapping
-    User updateUser(@Valid @RequestBody User user) {
-        if (users.containsKey(user.getId())) {
-            checkPresenceUserName(user);
-            users.put(user.getId(), user);
-            log.info("Обновлен пользователь " + user);
-        } else {
+    public User updateUser(@Valid @RequestBody User user) {
+        if (!users.containsKey(user.getId())) {
             throw new UnnownUserException("Пользователь не существует");
         }
+        checkPresenceUserName(user);
+        users.put(user.getId(), user);
+        log.info("Обновлен пользователь " + user);
         return user;
     }
 
     @GetMapping
-    List<User> getUsers() {
+    public List<User> getUsers() {
         log.info("Запрошен список всех пользователей");
         return new ArrayList<>(users.values());
     }
 
-    private Integer createId() {
+    private long createId() {
         return ++id;
     }
 

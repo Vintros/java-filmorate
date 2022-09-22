@@ -19,41 +19,40 @@ import java.util.Map;
 @Slf4j
 public class FilmController {
 
-    private final Map<Integer, Film> films = new HashMap<>();
-    private Integer id = 0;
+    private final Map<Long, Film> films = new HashMap<>();
+    private long id = 0;
 
     @PostMapping
-    Film addFilm(@Valid @RequestBody Film film) {
+    public Film addFilm(@Valid @RequestBody Film film) {
         if (films.containsKey(film.getId())) {
             throw new ExistsException("Такой фильм уже зарегистрирован");
-        } else {
-            validationFilm(film);
-            film.setId(createId());
-            films.put(film.getId(), film);
-            log.info("Фильм {} добавлен в коллекцию", film.getName());
         }
+        validationFilm(film);
+        film.setId(createId());
+        films.put(film.getId(), film);
+        log.info("Фильм {} добавлен в коллекцию", film.getName());
+
         return film;
     }
 
     @PutMapping
-    Film updateFilm(@Valid @RequestBody Film film) {
-        if (films.containsKey(film.getId())) {
-            validationFilm(film);
-            films.put(film.getId(), film);
-            log.info("Фильм {} обновлен", film.getName());
-        } else {
+    public Film updateFilm(@Valid @RequestBody Film film) {
+        if (!films.containsKey(film.getId())) {
             throw new UnnownFilmException("Неизвестный фильм");
         }
+        validationFilm(film);
+        films.put(film.getId(), film);
+        log.info("Фильм {} обновлен", film.getName());
         return film;
     }
 
     @GetMapping
-    List<Film> getFilms() {
+    public List<Film> getFilms() {
         log.info("Запрошен список всех фильмов");
         return new ArrayList<>(films.values());
     }
 
-    private Integer createId() {
+    private long createId() {
         return ++id;
     }
 
