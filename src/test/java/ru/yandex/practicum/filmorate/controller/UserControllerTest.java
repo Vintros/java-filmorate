@@ -66,7 +66,7 @@ class UserControllerTest {
 
         User newUser = new User("mail@mail.ru", "Login", LocalDate.of(1946, 8, 20));
         newUser.setName("Name");
-        newUser.setId(1);
+        newUser.setId(1L);
 
         mockMvc.perform(post("/users")
                         .content(objectMapper.writeValueAsBytes(newUser))
@@ -151,7 +151,7 @@ class UserControllerTest {
 
         User newUser = new User("mail@yandex.ru", "newLogin", LocalDate.of(1950, 8, 20));
         newUser.setName("Good Name");
-        newUser.setId(1);
+        newUser.setId(1L);
 
         mockMvc.perform(put("/users")
                         .content(objectMapper.writeValueAsBytes(newUser))
@@ -183,7 +183,7 @@ class UserControllerTest {
 
         User newUser = new User("mail@yandex.ru", "newLogin", LocalDate.of(1950, 8, 20));
         newUser.setName("Good Name");
-        newUser.setId(-1);
+        newUser.setId(-1L);
 
         mockMvc.perform(put("/users")
                         .content(objectMapper.writeValueAsBytes(newUser))

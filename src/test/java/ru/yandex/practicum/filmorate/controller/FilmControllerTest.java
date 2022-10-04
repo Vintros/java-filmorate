@@ -66,7 +66,7 @@ class FilmControllerTest {
                 .andExpect(jsonPath("$.duration").value(200));
 
         Film newFilm = new Film("Name", "Description Film", LocalDate.of(2000, 1, 1), 200L);
-        newFilm.setId(1);
+        newFilm.setId(1L);
 
         mockMvc.perform(post("/films")
                         .content(objectMapper.writeValueAsString(newFilm))
@@ -168,7 +168,7 @@ class FilmControllerTest {
                 .andExpect(jsonPath("$.duration").value(200));
 
         Film newFilm = new Film("New name", "New Description Film", LocalDate.of(2021, 5, 7), 300L);
-        newFilm.setId(1);
+        newFilm.setId(1L);
 
         mockMvc.perform(put("/films")
                         .content(objectMapper.writeValueAsString(newFilm))
@@ -199,7 +199,7 @@ class FilmControllerTest {
                 .andExpect(jsonPath("$.duration").value(200));
 
         Film newFilm = new Film("New name", "New Description Film", LocalDate.of(2021, 5, 7), 300L);
-        newFilm.setId(-1);
+        newFilm.setId(-1L);
 
         mockMvc.perform(put("/films")
                         .content(objectMapper.writeValueAsString(newFilm))
@@ -233,4 +233,8 @@ class FilmControllerTest {
                 .andExpect(jsonPath("$.[0].releaseDate").value("2000-01-01"))
                 .andExpect(jsonPath("$.[0].duration").value(200));
     }
+
+
+
+
 }
