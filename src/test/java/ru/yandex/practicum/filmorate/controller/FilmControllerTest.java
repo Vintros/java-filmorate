@@ -32,8 +32,6 @@ class FilmControllerTest {
     @Autowired
     private FilmController filmController;
 
-
-
     @Test
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
     void createFilm() throws Exception {
@@ -68,7 +66,7 @@ class FilmControllerTest {
                 .andExpect(jsonPath("$.duration").value(200));
 
         Film newFilm = new Film("Name", "Description Film", LocalDate.of(2000, 1, 1), 200L);
-        newFilm.setId(1);
+        newFilm.setId(1L);
 
         mockMvc.perform(post("/films")
                         .content(objectMapper.writeValueAsString(newFilm))
@@ -170,7 +168,7 @@ class FilmControllerTest {
                 .andExpect(jsonPath("$.duration").value(200));
 
         Film newFilm = new Film("New name", "New Description Film", LocalDate.of(2021, 5, 7), 300L);
-        newFilm.setId(1);
+        newFilm.setId(1L);
 
         mockMvc.perform(put("/films")
                         .content(objectMapper.writeValueAsString(newFilm))
@@ -201,7 +199,7 @@ class FilmControllerTest {
                 .andExpect(jsonPath("$.duration").value(200));
 
         Film newFilm = new Film("New name", "New Description Film", LocalDate.of(2021, 5, 7), 300L);
-        newFilm.setId(-1);
+        newFilm.setId(-1L);
 
         mockMvc.perform(put("/films")
                         .content(objectMapper.writeValueAsString(newFilm))
