@@ -6,7 +6,7 @@ Template repository for Filmorate project.
 В таблицах Genres и Likes составные ключи из двух полей.
 
 Запрос всех фильмов:
-```
+```sql
 SELECT f.film_id,
         f.name,
         f.description,
@@ -18,7 +18,7 @@ LEFT JOIN rating AS r ON f.rating_id = r.rating_id;
 ```
 
 Запрос всех пользователей:
-```
+```sql
 SELECT user_id,
         name,
         email,
@@ -28,7 +28,7 @@ FROM users;
 ```
 
 Запрос топ N наиболее популярных фильмов:
-```
+```sql
 SELECT f.film_id,
         f.name,
         f.description,
@@ -44,7 +44,7 @@ LIMIT N;
 ```
 
 Запрос списка общих друзей c user:
-```
+```sql
 SELECT user_id,
         name,
         email,
