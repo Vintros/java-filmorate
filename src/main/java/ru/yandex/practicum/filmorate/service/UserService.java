@@ -6,8 +6,8 @@ import ru.yandex.practicum.filmorate.exception.ExistsException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static ru.yandex.practicum.filmorate.validator.Validator.validateUser;
 import static ru.yandex.practicum.filmorate.validator.Validator.validateUserNotExist;
@@ -27,11 +27,10 @@ public class UserService {
         validateUser(friendId);
         User firstUser = userStorage.getUserById(id);
         User secondUser = userStorage.getUserById(friendId);
-        if (firstUser.getFriends().contains(friendId) && secondUser.getFriends().contains(id)) {
-            throw new ExistsException(String.format("Пользователи с id: %d, %d уже друзья", id, friendId));
+        if (firstUser.getFriends().contains(secondUser)) {
+            throw new ExistsException(String.format("Пользователь с id: %d, уже дружит с %d", id, friendId));
         }
-        firstUser.getFriends().add(friendId);
-        secondUser.getFriends().add(id);
+        userStorage.addFriend(id, friendId);
         log.info(String.format("Пользователь с id: %d добавил в друзья пользователя с id: %d", id, friendId));
     }
 
@@ -40,11 +39,10 @@ public class UserService {
         validateUser(friendId);
         User firstUser = userStorage.getUserById(id);
         User secondUser = userStorage.getUserById(friendId);
-        if (!firstUser.getFriends().contains(friendId) && !secondUser.getFriends().contains(id)) {
-            throw new ExistsException(String.format("Пользователи с id: %d, %d не друзья", id, friendId));
+        if (!firstUser.getFriends().contains(secondUser)) {
+            throw new ExistsException(String.format("Пользователь с id: %d не дружит с %d", id, friendId));
         }
-        firstUser.getFriends().remove(friendId);
-        secondUser.getFriends().remove(id);
+        userStorage.removeFriend(id, friendId);
         log.info(String.format("Пользователь с id: %d удалил из друзей пользователя с id: %d", id, friendId));
     }
 
@@ -52,21 +50,14 @@ public class UserService {
         validateUser(id);
         User user = userStorage.getUserById(id);
         log.info(String.format("Пользователь с id: %d запросил список друзей", id));
-        return user.getFriends().stream()
-                .map(userStorage::getUserById)
-                .collect(Collectors.toList());
+        return new ArrayList<>(user.getFriends());
     }
 
     public List<User> getCommonFriends(Long id, Long secondId) {
         validateUser(id);
         validateUser(secondId);
-        User firstUser = userStorage.getUserById(id);
-        User secondUser = userStorage.getUserById(secondId);
         log.info(String.format("Пользователь с id: %d запросил список общих друзей с id: %d", id, secondId));
-        return firstUser.getFriends().stream()
-                .filter(friend -> secondUser.getFriends().contains(friend))
-                .map(userStorage::getUserById)
-                .collect(Collectors.toList());
+        return userStorage.getCommonFriends(id, secondId);
     }
 
     public User createUser(User user) {

@@ -1,6 +1,6 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.ArrayList;
@@ -8,7 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Component
+@Repository
+@Deprecated
 public class InMemoryUserStorage implements UserStorage {
 
     private final Map<Long, User> users = new HashMap<>();
@@ -32,6 +33,19 @@ public class InMemoryUserStorage implements UserStorage {
     @Override
     public User getUserById(Long id) {
         return users.get(id);
+    }
+
+    @Override
+    public void addFriend(Long id, Long friendId) {
+    }
+
+    @Override
+    public void removeFriend(Long id, Long friendId) {
+    }
+
+    @Override
+    public List<User> getCommonFriends(Long id, Long friendId) {
+        return null;
     }
 
     private long createId() {
