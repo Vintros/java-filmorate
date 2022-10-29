@@ -7,15 +7,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
+import ru.yandex.practicum.filmorate.model.User;
 
+import java.sql.Date;
 import java.time.LocalDate;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -29,13 +31,10 @@ class FilmControllerTest {
     private MockMvc mockMvc;
     private Film film;
 
-    @Autowired
-    private FilmController filmController;
-
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
+    @Sql(scripts = {"file:./src/test/java/setup_test.sql"})
     void createFilm() throws Exception {
-        film = new Film("Name", "Description Film", LocalDate.of(2000, 1, 1), 200L);
+        film = new Film("Name", "Description Film", Date.valueOf(LocalDate.of(2000, 1, 1)), 200L, new Mpa(1L, null));
 
         mockMvc.perform(post("/films")
                         .content(objectMapper.writeValueAsString(film))
@@ -46,13 +45,36 @@ class FilmControllerTest {
                 .andExpect(jsonPath("$.name").value("Name"))
                 .andExpect(jsonPath("$.description").value("Description Film"))
                 .andExpect(jsonPath("$.releaseDate").value("2000-01-01"))
-                .andExpect(jsonPath("$.duration").value(200));
+                .andExpect(jsonPath("$.duration").value(200))
+                .andExpect(jsonPath("$.mpa").isMap())
+                .andExpect(jsonPath("$.mpa.id").value(1));
     }
 
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
+    @Sql(scripts = {"file:./src/test/java/setup_test.sql"})
+    void createFilmWithGenres() throws Exception {
+        film = new Film("Name", "Description Film", Date.valueOf(LocalDate.of(2000, 1, 1)), 200L, new Mpa(1L, null));
+        film.getGenres().add(new Genre(1L, null));
+
+        mockMvc.perform(post("/films")
+                        .content(objectMapper.writeValueAsString(film))
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.name").value("Name"))
+                .andExpect(jsonPath("$.description").value("Description Film"))
+                .andExpect(jsonPath("$.releaseDate").value("2000-01-01"))
+                .andExpect(jsonPath("$.duration").value(200))
+                .andExpect(jsonPath("$.mpa").isMap())
+                .andExpect(jsonPath("$.mpa.id").value(1))
+                .andExpect(jsonPath("$.genres[0].id").value(1));
+    }
+
+    @Test
+    @Sql(scripts = {"file:./src/test/java/setup_test.sql"})
     void createFilmTwice() throws Exception {
-        film = new Film("Name", "Description Film", LocalDate.of(2000, 1, 1), 200L);
+        film = new Film("Name", "Description Film", Date.valueOf(LocalDate.of(2000, 1, 1)), 200L, new Mpa(1L, null));
 
         mockMvc.perform(post("/films")
                         .content(objectMapper.writeValueAsString(film))
@@ -65,8 +87,8 @@ class FilmControllerTest {
                 .andExpect(jsonPath("$.releaseDate").value("2000-01-01"))
                 .andExpect(jsonPath("$.duration").value(200));
 
-        Film newFilm = new Film("Name", "Description Film", LocalDate.of(2000, 1, 1), 200L);
-        newFilm.setId(1L);
+        Film newFilm = new Film(1L, "Name", "Description Film", Date.valueOf(LocalDate.of( 2000, 1, 1)),
+                200L, new Mpa(1L, null));
 
         mockMvc.perform(post("/films")
                         .content(objectMapper.writeValueAsString(newFilm))
@@ -75,12 +97,11 @@ class FilmControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
-
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
+    @Sql(scripts = {"file:./src/test/java/setup_test.sql"})
     void createFilmDescriptionLength200() throws Exception {
         String rnString = RandomString.make(200);
-        film = new Film("Name", rnString, LocalDate.of(1895, 12, 28), 200L);
+        film = new Film("Name", rnString, Date.valueOf(LocalDate.of(1895, 12, 28)), 200L, new Mpa(1L, null));
 
         mockMvc.perform(post("/films")
                         .content(objectMapper.writeValueAsString(film))
@@ -91,8 +112,9 @@ class FilmControllerTest {
     }
 
     @Test
+    @Sql(scripts = {"file:./src/test/java/setup_test.sql"})
     void createFilmFailName() throws Exception {
-        film = new Film("", "Description Film", LocalDate.of(2000, 1, 1), 200L);
+        film = new Film("", "Description Film", Date.valueOf(LocalDate.of(2000, 1, 1)), 200L, new Mpa(1L, null));
 
         mockMvc.perform(post("/films")
                         .content(objectMapper.writeValueAsString(film))
@@ -102,14 +124,15 @@ class FilmControllerTest {
     }
 
     @Test
+    @Sql(scripts = {"file:./src/test/java/setup_test.sql"})
     void createFilmEmptyRequestBody() throws Exception {
         mockMvc.perform(post("/films")).andExpect(status().isBadRequest());
     }
 
-
     @Test
+    @Sql(scripts = {"file:./src/test/java/setup_test.sql"})
     void createFilmFailDescription() throws Exception {
-        film = new Film("Name", RandomString.make(201), LocalDate.of(2000, 1, 1), 200L);
+        film = new Film("Name", RandomString.make(201), Date.valueOf(LocalDate.of(2000, 1, 1)), 200L, new Mpa(1L, null));
 
         mockMvc.perform(post("/films")
                         .content(objectMapper.writeValueAsString(film))
@@ -119,8 +142,9 @@ class FilmControllerTest {
     }
 
     @Test
+    @Sql(scripts = {"file:./src/test/java/setup_test.sql"})
     void createFilmFailReleaseDate() throws Exception {
-        film = new Film("Name", RandomString.make(150), LocalDate.of(1895, 12, 27), 200L);
+        film = new Film("Name", RandomString.make(150), Date.valueOf(LocalDate.of(1895, 12, 27)), 200L, new Mpa(1L, null));
 
         mockMvc.perform(post("/films")
                         .content(objectMapper.writeValueAsString(film))
@@ -130,8 +154,9 @@ class FilmControllerTest {
     }
 
     @Test
+    @Sql(scripts = {"file:./src/test/java/setup_test.sql"})
     void createFilmFailReleaseDateInFuture() throws Exception {
-        film = new Film("Name", RandomString.make(150), LocalDate.of(2555, 12, 27), 200L);
+        film = new Film("Name", RandomString.make(150), Date.valueOf(LocalDate.of(2555, 12, 27)), 200L, new Mpa(1L, null));
 
         mockMvc.perform(post("/films")
                         .content(objectMapper.writeValueAsString(film))
@@ -141,8 +166,9 @@ class FilmControllerTest {
     }
 
     @Test
+    @Sql(scripts = {"file:./src/test/java/setup_test.sql"})
     void createFilmFailDuration() throws Exception {
-        film = new Film("Name", RandomString.make(150), LocalDate.of(2000, 1, 1), -200L);
+        film = new Film("Name", RandomString.make(150), Date.valueOf(LocalDate.of(2000, 1, 1)), -200L, new Mpa(1L, null));
 
         mockMvc.perform(post("/films")
                         .content(objectMapper.writeValueAsString(film))
@@ -152,9 +178,9 @@ class FilmControllerTest {
     }
 
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
+    @Sql(scripts = {"file:./src/test/java/setup_test.sql"})
     void updateFilm() throws Exception {
-        film = new Film("Name", "Description Film", LocalDate.of(2000, 1, 1), 200L);
+        film = new Film("Name", "Description Film", Date.valueOf(LocalDate.of(2000, 1, 1)), 200L, new Mpa(1L, null));
 
         mockMvc.perform(post("/films")
                         .content(objectMapper.writeValueAsString(film))
@@ -167,7 +193,8 @@ class FilmControllerTest {
                 .andExpect(jsonPath("$.releaseDate").value("2000-01-01"))
                 .andExpect(jsonPath("$.duration").value(200));
 
-        Film newFilm = new Film("New name", "New Description Film", LocalDate.of(2021, 5, 7), 300L);
+        Film newFilm = new Film("New name", "New Description Film", Date.valueOf(LocalDate.of(2021, 5, 7)),
+                300L, new Mpa(1L, null));
         newFilm.setId(1L);
 
         mockMvc.perform(put("/films")
@@ -183,9 +210,9 @@ class FilmControllerTest {
     }
 
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
+    @Sql(scripts = {"file:./src/test/java/setup_test.sql"})
     void updateFilmFailId() throws Exception {
-        film = new Film("Name", "Description Film", LocalDate.of(2000, 1, 1), 200L);
+        film = new Film("Name", "Description Film", Date.valueOf(LocalDate.of(2000, 1, 1)), 200L, new Mpa(1L, null));
 
         mockMvc.perform(post("/films")
                         .content(objectMapper.writeValueAsString(film))
@@ -198,7 +225,8 @@ class FilmControllerTest {
                 .andExpect(jsonPath("$.releaseDate").value("2000-01-01"))
                 .andExpect(jsonPath("$.duration").value(200));
 
-        Film newFilm = new Film("New name", "New Description Film", LocalDate.of(2021, 5, 7), 300L);
+        Film newFilm = new Film("New name", "New Description Film", Date.valueOf(LocalDate.of(2021, 5, 7)),
+                300L, new Mpa(1L, null));
         newFilm.setId(-1L);
 
         mockMvc.perform(put("/films")
@@ -209,9 +237,9 @@ class FilmControllerTest {
     }
 
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
+    @Sql(scripts = {"file:./src/test/java/setup_test.sql"})
     void getFilms() throws Exception {
-        film = new Film("Name", "Description Film", LocalDate.of(2000, 1, 1), 200L);
+        film = new Film("Name", "Description Film", Date.valueOf(LocalDate.of(2000, 1, 1)), 200L, new Mpa(1L, null));
 
         mockMvc.perform(post("/films")
                         .content(objectMapper.writeValueAsString(film))
@@ -234,7 +262,128 @@ class FilmControllerTest {
                 .andExpect(jsonPath("$.[0].duration").value(200));
     }
 
+    @Test
+    @Sql(scripts = {"file:./src/test/java/setup_test.sql"})
+    void getFilmById() throws Exception {
+        film = new Film("Name", "Description Film", Date.valueOf(LocalDate.of(2000, 1, 1)), 200L, new Mpa(1L, null));
 
+        mockMvc.perform(post("/films")
+                        .content(objectMapper.writeValueAsString(film))
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.name").value("Name"))
+                .andExpect(jsonPath("$.description").value("Description Film"))
+                .andExpect(jsonPath("$.releaseDate").value("2000-01-01"))
+                .andExpect(jsonPath("$.duration").value(200));
 
+        mockMvc.perform(get("/films/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.name").value("Name"))
+                .andExpect(jsonPath("$.description").value("Description Film"))
+                .andExpect(jsonPath("$.releaseDate").value("2000-01-01"))
+                .andExpect(jsonPath("$.duration").value(200))
+                .andExpect(jsonPath("$.mpa.id").value(1));
+    }
+
+    @Test
+    @Sql(scripts = {"file:./src/test/java/setup_test.sql"})
+    void getFilmByIncorrectId() throws Exception {
+        film = new Film("Name", "Description Film", Date.valueOf(LocalDate.of(2000, 1, 1)), 200L, new Mpa(1L, null));
+
+        mockMvc.perform(post("/films")
+                        .content(objectMapper.writeValueAsString(film))
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.name").value("Name"))
+                .andExpect(jsonPath("$.description").value("Description Film"))
+                .andExpect(jsonPath("$.releaseDate").value("2000-01-01"))
+                .andExpect(jsonPath("$.duration").value(200));
+
+        mockMvc.perform(get("/films/2"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @Sql(scripts = {"file:./src/test/java/setup_test.sql"})
+    void getMostLikedFilms() throws Exception {
+        film = new Film("Name", "Description Film", Date.valueOf(LocalDate.of(2000, 1, 1)), 200L, new Mpa(1L, null));
+
+        mockMvc.perform(post("/films")
+                        .content(objectMapper.writeValueAsString(film))
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk());
+
+        Film film2 = new Film("SecondName", "Description", Date.valueOf(LocalDate.of(1999, 1, 10)), 200L, new Mpa(2L, null));
+
+        mockMvc.perform(post("/films")
+                        .content(objectMapper.writeValueAsString(film2))
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk());
+
+        User user = new User("mail@mail.ru", "Login", Date.valueOf(LocalDate.of(1946, 8, 20)));
+        mockMvc.perform(post("/users")
+                        .content(objectMapper.writeValueAsBytes(user))
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk());
+
+        mockMvc.perform(put("/films/2/like/1"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/films/popular"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(2))
+                .andExpect(jsonPath("$[1].id").value(1));
+    }
+
+    @Test
+    @Sql(scripts = {"file:./src/test/java/setup_test.sql"})
+    void removeLikeFilm() throws Exception {
+        film = new Film("Name", "Description Film", Date.valueOf(LocalDate.of(2000, 1, 1)), 200L, new Mpa(1L, null));
+
+        mockMvc.perform(post("/films")
+                        .content(objectMapper.writeValueAsString(film))
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk());
+
+        Film film2 = new Film("SecondName", "Description", Date.valueOf(LocalDate.of(1999, 1, 10)), 200L, new Mpa(2L, null));
+
+        mockMvc.perform(post("/films")
+                        .content(objectMapper.writeValueAsString(film2))
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk());
+
+        User user = new User("mail@mail.ru", "Login", Date.valueOf(LocalDate.of(1946, 8, 20)));
+        mockMvc.perform(post("/users")
+                        .content(objectMapper.writeValueAsBytes(user))
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk());
+
+        mockMvc.perform(put("/films/2/like/1"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/films/popular"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(2))
+                .andExpect(jsonPath("$[1].id").value(1));
+
+        mockMvc.perform(delete("/films/2/like/1"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/films/popular"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[1].id").value(2));
+    }
 
 }

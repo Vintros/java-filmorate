@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.storage.film;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.util.List;
+import java.util.Map;
 
 public interface FilmStorage {
 
@@ -10,7 +11,13 @@ public interface FilmStorage {
 
     Film updateFilm(Film film);
 
-    List<Film> getFilms();
+    List<Film> getFilmsWithoutGenres();
+
+    void addLikeFilm(Long id, Long userId);
+
+    void removeLikeFilm(Long id, Long userId);
+
+    Map<Long, List<Long>> getUsersIdLiked();
 
     Film getFilmById(Long id);
 }

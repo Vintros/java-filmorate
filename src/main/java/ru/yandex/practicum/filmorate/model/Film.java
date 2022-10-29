@@ -1,18 +1,21 @@
 package ru.yandex.practicum.filmorate.model;
 
-import lombok.Data;
-import lombok.NonNull;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.*;
 
 import javax.validation.constraints.*;
-import java.time.LocalDate;
+import java.sql.Date;
 import java.util.HashSet;
 import java.util.Set;
 
 @Data
+@AllArgsConstructor
+@RequiredArgsConstructor
+@NoArgsConstructor
+@EqualsAndHashCode(exclude = {"mpa", "genres", "usersIdLiked"})
 public class Film {
 
     private Long id;
-    private final Set<Long> userIdLiked = new HashSet<>();
     @NonNull
     @NotBlank(message = "Пустое поле названия фильма")
     private String name;
@@ -21,8 +24,13 @@ public class Film {
     private String description;
     @NonNull
     @PastOrPresent(message = "Некорректная дата фильма")
-    private LocalDate releaseDate;
+    private Date releaseDate;
     @NonNull
     @Positive
     private Long duration;
+    @NonNull
+    private Mpa mpa;
+    private final Set<Genre> genres = new HashSet<>();
+    @JsonIgnore
+    private final Set<Long> usersIdLiked = new HashSet<>();
 }
