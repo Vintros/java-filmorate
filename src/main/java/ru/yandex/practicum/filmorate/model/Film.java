@@ -12,7 +12,7 @@ import java.util.Set;
 @AllArgsConstructor
 @RequiredArgsConstructor
 @NoArgsConstructor
-@EqualsAndHashCode(exclude = {"mpa", "genres", "userIdLiked"})
+@EqualsAndHashCode(exclude = {"mpa", "genres", "usersIdLiked"})
 public class Film {
 
     private Long id;
@@ -32,5 +32,5 @@ public class Film {
     private Mpa mpa;
     private final Set<Genre> genres = new HashSet<>();
     @JsonIgnore
-    private final Set<Long> userIdLiked = new HashSet<>();
+    private final Set<Long> usersIdLiked = new HashSet<>();
 }
