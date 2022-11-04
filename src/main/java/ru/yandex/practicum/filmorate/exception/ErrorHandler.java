@@ -15,7 +15,7 @@ import java.util.Objects;
 public class ErrorHandler {
 
     @ExceptionHandler({UnknownFilmException.class, UnknownUserException.class, UnknownGenreException.class,
-            UnknownMpaException.class})
+            UnknownMpaException.class, UnknownReviewException.class})
     @ResponseStatus(value = HttpStatus.NOT_FOUND)
     public ErrorResponse handleNotFound(final RuntimeException e) {
         log.error(e.getMessage());
