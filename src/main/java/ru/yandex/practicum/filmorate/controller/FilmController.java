@@ -48,6 +48,11 @@ public class FilmController {
         return filmService.getMostLikedFilms(count);
     }
 
+    @DeleteMapping("/{filmId}")
+    public void removeFilmById(@PathVariable Long filmId) {
+        filmService.removeFilmById(filmId);
+    }
+
     @DeleteMapping("{id}/like/{userId}")
     public void removeLikeFilm(@PathVariable Long id, @PathVariable Long userId) {
         filmService.removeLikeFilm(id, userId);

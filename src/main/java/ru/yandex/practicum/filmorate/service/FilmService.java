@@ -97,4 +97,10 @@ public class FilmService {
         log.info("Фильм с id: {}, запрошен", id);
         return filmStorage.getFilmById(id);
     }
+
+    public void removeFilmById(Long id) {
+        validateFilm(id);
+        log.info("Фильм с id: {}, удалён из коллекции", id);
+        filmStorage.removeFilmById(id);
+    }
 }
