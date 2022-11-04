@@ -91,4 +91,9 @@ public class UserService {
             user.setName(user.getLogin());
         }
     }
+
+    public void removeUserById(Long id) {
+        validateUser(id);
+        userStorage.removeUserById(id);
+    }
 }
