@@ -87,6 +87,12 @@ public class DbUserStorage implements UserStorage {
         jdbcTemplate.update(sqlQuery, id, friendId);
     }
 
+    @Override
+    public void removeUserById(Long id) {
+        String sqlQuery = "delete from users where user_id = ?";
+        jdbcTemplate.update(sqlQuery, id);
+    }
+
     private User mapRowToUser(ResultSet rs, int rowNum) throws SQLException {
         return new User(
                 rs.getLong("user_id"),
