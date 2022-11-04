@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS films
 CREATE TABLE IF NOT EXISTS genres
 (
     film_id  bigint REFERENCES films (film_id) ON DELETE CASCADE,
-    genre_id integer REFERENCES genre (genre_id),
+    genre_id integer REFERENCES genre (genre_id) ON DELETE CASCADE,
     PRIMARY KEY (film_id, genre_id)
 );
 
