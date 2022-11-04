@@ -100,6 +100,7 @@ public class FilmService {
 
     public void removeFilmById(Long id) {
         validateFilm(id);
+        log.info("Фильм ID_{} удалён из коллекции", id);
         filmStorage.removeFilmById(id);
     }
 }

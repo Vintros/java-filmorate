@@ -94,6 +94,7 @@ public class UserService {
 
     public void removeUserById(Long id) {
         validateUser(id);
+        log.info("Пользователь ID_{} удалён из коллекции", id);
         userStorage.removeUserById(id);
     }
 }
