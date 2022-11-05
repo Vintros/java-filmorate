@@ -25,7 +25,6 @@ public class Film {
     @Size(max = 200, message = "Описание должно быть не более 200 символов")
     private String description;
     @NonNull
-    @PastOrPresent(message = "Некорректная дата фильма")
     private Date releaseDate;
     @NonNull
     @Positive
