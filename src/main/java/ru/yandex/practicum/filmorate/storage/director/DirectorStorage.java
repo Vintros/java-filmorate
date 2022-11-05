@@ -3,6 +3,8 @@ package ru.yandex.practicum.filmorate.storage.director;
 import ru.yandex.practicum.filmorate.model.Director;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public interface DirectorStorage {
     /**
@@ -46,4 +48,8 @@ public interface DirectorStorage {
      * @param id идентификатор режиссёра.
      */
     void removeDirectorById(Long id);
+
+    Map<Long, List<Director>> getGenresByFilmsId();
+
+    List<Director> getDirectorsByFilmId(Long id);
 }

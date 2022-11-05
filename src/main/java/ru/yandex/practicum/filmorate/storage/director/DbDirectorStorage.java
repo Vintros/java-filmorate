@@ -8,7 +8,7 @@ import ru.yandex.practicum.filmorate.model.Director;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collection;
+import java.util.*;
 
 @Repository
 @Primary
@@ -51,6 +51,32 @@ public class DbDirectorStorage implements DirectorStorage {
     public void removeDirectorById(Long id) {
         String sqlQuery = "delete from director where director_id = ?";
         jdbcTemplate.update(sqlQuery, id);
+    }
+
+    @Override
+    public Map<Long, List<Director>> getGenresByFilmsId() {
+        String sqlQuery = "select directors.film_id, director.director_id, director.name from directors join director "
+                + "on directors.director_id = director.director_id order by directors.film_id";
+        return jdbcTemplate.query(sqlQuery, this::extractGenresByFilmId);
+    }
+
+    @Override
+    public List<Director> getDirectorsByFilmId(Long id) {
+        String sqlQuery = "select * from director where director_id in (select director_id from directors where film_id = ?)";
+        return jdbcTemplate.query(sqlQuery, new DirectorMapper(), id);
+    }
+
+    private Map<Long, List<Director>> extractGenresByFilmId(ResultSet rs) throws SQLException {
+        Map<Long, List<Director>> directorsByFilmId = new LinkedHashMap<>();
+        while (rs.next()) {
+            Long filmId = rs.getLong("directors.film_id");
+            directorsByFilmId.putIfAbsent(filmId, new ArrayList<>());
+            Director director = new Director();
+            director.setId(rs.getLong("director.director_id"));
+            director.setName(rs.getString("director.name"));
+            directorsByFilmId.get(filmId).add(director);
+        }
+        return directorsByFilmId;
     }
 
     private static class DirectorMapper implements RowMapper<Director> {
