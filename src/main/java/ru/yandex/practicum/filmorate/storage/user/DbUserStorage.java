@@ -92,21 +92,30 @@ public class DbUserStorage implements UserStorage {
     }
 
     @Override
+    public void removeUserById(Long id) {
+        String sqlQuery = "delete from users where user_id = ?";
+        jdbcTemplate.update(sqlQuery, id);
+    }
+
+    @Override
     public List<Film> getRecommendations(Long id) {
-        System.out.println("Gettin recomendations!");
         String sqlQuery = "SELECT USER_ID, FILM_ID FROM LIKES GROUP BY USER_ID, FILM_ID";
+        List<Film> result = new ArrayList<>();
 
         // Получаем список Entry с id_user (key) и id_film (value)
         List<Map.Entry<Long, Long>> dataList = jdbcTemplate.query(sqlQuery, this::mapRowToMapEntry);
+        if (dataList.isEmpty()) return result;
 
         // Составляем мапу данных для алгоритма
         Map<Long, ArrayList<Long>> data = getDataMap(dataList);
+        if (data.isEmpty()) return result;
 
         // Ищем пользователя с которым имеется максимальное количество перечений
         Long mostIntersectionsUserId = getMostIntersectionsUserId(id, data);
+        if (mostIntersectionsUserId == null) return result;
 
         // Получаем список фильмов-рекомендаций
-        List<Film> result = new ArrayList<>();
+
         for (Long otherFilmId : data.get(mostIntersectionsUserId)) {
             if (!data.get(id).contains(otherFilmId)) {
                 result.add(filmStorage.getFilmById(otherFilmId));
@@ -115,8 +124,6 @@ public class DbUserStorage implements UserStorage {
 
         return result;
     }
-
-
 
     private User mapRowToUser(ResultSet rs, int rowNum) throws SQLException {
         return new User(
@@ -127,6 +134,8 @@ public class DbUserStorage implements UserStorage {
                 rs.getDate("birthday")
         );
     }
+
+
 
     private Map.Entry<Long, Long> mapRowToMapEntry(ResultSet rs, int rowNum) throws SQLException {
         Long filmId = rs.getLong("film_id");

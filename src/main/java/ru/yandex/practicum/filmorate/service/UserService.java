@@ -92,6 +92,12 @@ public class UserService {
         return userStorage.getRecommendations(id);
     }
 
+    public void removeUserById(Long id) {
+        validateUser(id);
+        log.info("удалён пользователь с id: {}", id);
+        userStorage.removeUserById(id);
+    }
+
     private void checkPresenceUserName(User user) {
         if (user.getName() == null || user.getName().isEmpty() || user.getName().isBlank()) {
             log.debug("Имя пользователя {} пустое, в качестве имени пользователя присвоен логин", user);

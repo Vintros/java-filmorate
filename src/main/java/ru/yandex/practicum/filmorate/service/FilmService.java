@@ -5,8 +5,10 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ExistsException;
 import ru.yandex.practicum.filmorate.exception.UnknownUserException;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 
@@ -21,10 +23,12 @@ public class FilmService {
 
     private final FilmStorage filmStorage;
     private final GenreStorage genreStorage;
+    private final DirectorStorage directorStorage;
 
-    public FilmService(FilmStorage filmStorage, GenreStorage genreStorage) {
+    public FilmService(FilmStorage filmStorage, GenreStorage genreStorage, DirectorStorage directorStorage) {
         this.filmStorage = filmStorage;
         this.genreStorage = genreStorage;
+        this.directorStorage = directorStorage;
     }
 
     public void addLikeFilm(Long id, Long userId) {
@@ -84,9 +88,13 @@ public class FilmService {
         log.info("Запрошен список всех фильмов");
         List<Film> films = filmStorage.getFilmsWithoutGenres();
         Map<Long, List<Genre>> genresByFilmsId = genreStorage.getGenresByFilmsId();
+        Map<Long, List<Director>> directorsByFilmsId = directorStorage.getDirectorsByFilmsId();
         for (Film film : films) {
             if (genresByFilmsId.get(film.getId()) != null) {
                 film.getGenres().addAll(genresByFilmsId.get(film.getId()));
+            }
+            if (directorsByFilmsId.get(film.getId()) != null) {
+                film.getDirectors().addAll(directorsByFilmsId.get(film.getId()));
             }
         }
         return films;
@@ -96,5 +104,16 @@ public class FilmService {
         validateFilm(id);
         log.info("Фильм с id: {}, запрошен", id);
         return filmStorage.getFilmById(id);
+    }
+
+    public void removeFilmById(Long id) {
+        validateFilm(id);
+        log.info("Фильм с id: {}, удалён из коллекции", id);
+        filmStorage.removeFilmById(id);
+    }
+
+    public List<Film> getFilmsByDirector(Long directorId, String sortBy) {
+        validateDirector(directorId);
+        return filmStorage.getFilmsByDirector(directorId,sortBy);
     }
 }
