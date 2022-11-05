@@ -5,8 +5,6 @@ import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.storage.review.ReviewStorage;
 
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import static ru.yandex.practicum.filmorate.validator.Validator.*;
 
@@ -40,18 +38,7 @@ public class ReviewService {
     }
 
     public List<Review> getReviewsByFilmIdOrAll(Long filmId, Long count) {
-        List<Review> reviews = reviewStorage.getReviewsByFilmIdOrAll(filmId);
-        Map<Long, Map<Long, Boolean>> usersRatingByReviews = reviewStorage.getRatingsByReviewsId();
-        for (Review review : reviews) {
-            if (usersRatingByReviews.get(review.getReviewId()) != null) {
-                review.getUsersRating().putAll(usersRatingByReviews.get(review.getReviewId()));
-                review.setUseful(review.getUseful());
-            }
-        }
-        return reviews.stream()
-                .sorted((r1, r2) -> (int) (r2.getUseful() - r1.getUseful()))
-                .limit(count)
-                .collect(Collectors.toList());
+        return reviewStorage.getReviewsByFilmIdOrAll(filmId, count);
     }
 
     public void addLikeToReview(Long id, Long userId) {

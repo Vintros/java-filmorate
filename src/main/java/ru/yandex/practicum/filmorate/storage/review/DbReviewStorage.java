@@ -38,14 +38,16 @@ public class DbReviewStorage implements ReviewStorage {
 
     @Override
     public Review getReviewById(Long id) {
-        String sqlQuery = "select review_id, film_id, user_id, content, is_positive " +
-                "from reviews where review_id = ?";
-        Review review = jdbcTemplate.queryForObject(sqlQuery, this::mapRowToReview, id);
-        String sqlQueryRating = "select user_id, is_positive from reviews_rating where review_id = ?";
-        Map<Long, Boolean> usersRating = jdbcTemplate.query(sqlQueryRating, this::mapRowToReviewRating, id);
-        review.getUsersRating().putAll(usersRating);
-        review.setUseful(review.getUseful());
-        return review;
+        String sqlQuery = "select r.review_id, r.film_id, r.user_id, r.content, r.is_positive," +
+        "count(rrp.review_id) - count(rrn.review_id) as useful " +
+        "from reviews as r " +
+        "left join (select review_id from reviews_rating where is_positive = true) as rrp " +
+                "on r.review_id = rrp.review_id " +
+        "left join (select review_id from reviews_rating where is_positive = false) as rrn " +
+                "on r.review_id = rrn.review_id " +
+        "where r.review_id = ? " +
+        "group by r.review_id, r.film_id, r.user_id, r.content, r.is_positive;";
+        return jdbcTemplate.queryForObject(sqlQuery, this::mapRowToReview, id);
     }
 
     @Override
@@ -68,19 +70,21 @@ public class DbReviewStorage implements ReviewStorage {
     }
 
     @Override
-    public List<Review> getReviewsByFilmIdOrAll(Long filmId) {
-        String sqlQuery = "select review_id, film_id, user_id, content, is_positive " +
-                "from reviews";
+    public List<Review> getReviewsByFilmIdOrAll(Long filmId, Long count) {
+        String sqlQuery = "select r.review_id, r.film_id, r.user_id, r.content, r.is_positive, " +
+                "count(rrp.review_id) - count(rrn.review_id) as useful " +
+        "from reviews as r " +
+        "left join (select review_id from reviews_rating where is_positive = true) as rrp " +
+        "on r.review_id = rrp.review_id " +
+        "left join (select review_id from reviews_rating where is_positive = false) as rrn " +
+        "on r.review_id = rrn.review_id ";
         if (filmId != null && filmId > 0) {
             sqlQuery = sqlQuery + " where film_id = " + filmId;
         }
-        return jdbcTemplate.query(sqlQuery, this::mapRowToReview);
-    }
-
-    @Override
-    public Map<Long, Map<Long, Boolean>> getRatingsByReviewsId() {
-        String sqlQuery = "select review_id, user_id, is_positive from reviews_rating";
-        return jdbcTemplate.query(sqlQuery, this::mapRowToRatingByReviewsId);
+        sqlQuery = sqlQuery + "group by r.review_id, r.film_id, r.user_id, r.content, r.is_positive " +
+        "order by useful desc " +
+        "limit ?";
+        return jdbcTemplate.query(sqlQuery, this::mapRowToReview, count);
     }
 
     @Override
@@ -101,28 +105,6 @@ public class DbReviewStorage implements ReviewStorage {
         jdbcTemplate.update(sqlQuery, id, userId);
     }
 
-    private Map<Long, Map<Long, Boolean>> mapRowToRatingByReviewsId(ResultSet rs) throws SQLException {
-        Map<Long, Map<Long, Boolean>> ratingsByReviewsId = new LinkedHashMap<>();
-        while (rs.next()) {
-            Long reviewId = rs.getLong("review_id");
-            ratingsByReviewsId.putIfAbsent(reviewId, new HashMap<>());
-            Long userId = rs.getLong("user_id");
-            Boolean isPositive = rs.getBoolean("is_positive");
-            ratingsByReviewsId.get(reviewId).put(userId, isPositive);
-        }
-        return ratingsByReviewsId;
-    }
-
-    private Map<Long, Boolean> mapRowToReviewRating(ResultSet rs) throws SQLException {
-        Map<Long, Boolean> usersRating = new HashMap<>();
-        while (rs.next()) {
-            Long userId = rs.getLong("user_id");
-            Boolean isPositive = rs.getBoolean("is_positive");
-            usersRating.put(userId, isPositive);
-        }
-        return usersRating;
-    }
-
     private Review mapRowToReview(ResultSet rs, int rowNum) throws SQLException {
         Review review = new Review(
                 rs.getLong("review_id"),
@@ -130,7 +112,7 @@ public class DbReviewStorage implements ReviewStorage {
                 rs.getLong("film_id"),
                 rs.getString("content"),
                 rs.getBoolean("is_positive"),
-                null
+                rs.getLong("useful")
         );
         return review;
     }
