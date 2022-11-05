@@ -105,7 +105,7 @@ public class Validator {
     }
 
     public static void validateGenreAndYear(Integer genreId, Integer year) {
-        if (year != null && year < 1985 || genreId != null && genreId <= 0) {
+        if (year != null && year < 1895 || genreId != null && genreId <= 0) {
             throw new RuntimeException("Неправильный запрос");
         }
     }
