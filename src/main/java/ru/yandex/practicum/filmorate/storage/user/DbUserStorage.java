@@ -5,9 +5,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
-import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -19,11 +17,9 @@ import java.util.*;
 public class DbUserStorage implements UserStorage {
 
     private final JdbcTemplate jdbcTemplate;
-    private final FilmStorage filmStorage;
 
-    public DbUserStorage(JdbcTemplate jdbcTemplate, FilmStorage filmStorage) {
+    public DbUserStorage(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
-        this.filmStorage = filmStorage;
     }
 
     @Override
@@ -97,34 +93,6 @@ public class DbUserStorage implements UserStorage {
         jdbcTemplate.update(sqlQuery, id);
     }
 
-    @Override
-    public List<Film> getRecommendations(Long id) {
-        String sqlQuery = "SELECT USER_ID, FILM_ID FROM LIKES GROUP BY USER_ID, FILM_ID";
-        List<Film> result = new ArrayList<>();
-
-        // Получаем список Entry с id_user (key) и id_film (value)
-        List<Map.Entry<Long, Long>> dataList = jdbcTemplate.query(sqlQuery, this::mapRowToMapEntry);
-        if (dataList.isEmpty()) return result;
-
-        // Составляем мапу данных для алгоритма
-        Map<Long, ArrayList<Long>> data = getDataMap(dataList);
-        if (data.isEmpty()) return result;
-
-        // Ищем пользователя с которым имеется максимальное количество перечений
-        Long mostIntersectionsUserId = getMostIntersectionsUserId(id, data);
-        if (mostIntersectionsUserId == null) return result;
-
-        // Получаем список фильмов-рекомендаций
-
-        for (Long otherFilmId : data.get(mostIntersectionsUserId)) {
-            if (!data.get(id).contains(otherFilmId)) {
-                result.add(filmStorage.getFilmById(otherFilmId));
-            }
-        }
-
-        return result;
-    }
-
     private User mapRowToUser(ResultSet rs, int rowNum) throws SQLException {
         return new User(
                 rs.getLong("user_id"),
@@ -133,51 +101,5 @@ public class DbUserStorage implements UserStorage {
                 rs.getString("login"),
                 rs.getDate("birthday")
         );
-    }
-
-
-
-    private Map.Entry<Long, Long> mapRowToMapEntry(ResultSet rs, int rowNum) throws SQLException {
-        Long filmId = rs.getLong("film_id");
-        Long userId = rs.getLong("user_id");
-        return new AbstractMap.SimpleEntry<>(userId, filmId);
-    }
-
-    private static Map<Long, ArrayList<Long>> getDataMap(List<Map.Entry<Long, Long>> dataList) {
-        Map<Long, ArrayList<Long>> data = new HashMap<>();
-        for (Map.Entry<Long, Long> entry : dataList) {
-            Long entryKey = entry.getKey();
-            if (data.containsKey(entryKey)) {
-                Long value = entry.getValue();
-                data.get(entryKey).add(value);
-            } else {
-                data.put(entryKey, new ArrayList<>(Collections.singletonList(entry.getValue())));
-            }
-        }
-        return data;
-    }
-
-    private static Long getMostIntersectionsUserId(Long id, Map<Long, ArrayList<Long>> data) {
-        Map<Long, Integer> frequency = new HashMap<>();
-        for (Long userFilmId : data.get(id)) {
-            for (Map.Entry<Long, ArrayList<Long>> user : data.entrySet()) {
-                if (!user.getKey().equals(id)) {
-                    if (user.getValue().contains(userFilmId)) {
-                        if (frequency.containsKey(user.getKey())) {
-                            frequency.replace(user.getKey(), frequency.get(user.getKey()) + 1);
-                        } else {
-                            frequency.put(user.getKey(), 1);
-                        }
-                    }
-                }
-            }
-        }
-
-        Optional<Map.Entry<Long, Integer>> mostIntersectionsUser = frequency.entrySet().stream().max(Map.Entry.comparingByValue());
-        Long mostIntersectionsUserId = null;
-        if (mostIntersectionsUser.isPresent()) {
-            mostIntersectionsUserId = mostIntersectionsUser.get().getKey();
-        }
-        return mostIntersectionsUserId;
     }
 }
