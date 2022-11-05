@@ -166,8 +166,7 @@ public class DbFilmStorage implements FilmStorage {
                 rs.getLong("duration"),
                 new Mpa(
                         rs.getLong("films.mpa_id"),
-                        rs.getString("mpa.name")),
-                new HashSet<>()
+                        rs.getString("mpa.name"))
         );
         return film;
     }
@@ -185,25 +184,23 @@ public class DbFilmStorage implements FilmStorage {
 
     public List<Film> getListPopularFilm(long count) {
         final String sqlQuery = "SELECT F.FILM_ID, F.NAME, F.DESCRIPTION, " +
-                "F.RELEASE_DATE, F.DURATION, F.MPA_ID, M.NAME, G.GENRE_ID " +
+                "F.RELEASE_DATE, F.DURATION, F.MPA_ID, M.NAME " +
                 "from FILMS F " +
                 "join MPA M on M.MPA_ID = F.MPA_ID " +
-                "left join GENRES G on F.FILM_ID = G.FILM_ID " +
                 "left join LIKES L on F.FILM_ID = L.FILM_ID " +
-                "group by F.FILM_ID, G.GENRE_ID order by count(L.USER_ID) desc " +
+                "group by F.FILM_ID order by count(L.USER_ID) desc " +
                 "limit ?";
         return jdbcTemplate.query(sqlQuery, this::mapRowToFilm, count);
     }
 
     public List<Film> getListPopularFilmSortedByYear(int count, int year) {
         final String sql = "SELECT F.FILM_ID, F.NAME, F.DESCRIPTION, " +
-                "F.RELEASE_DATE, F.DURATION, F.MPA_ID, M.NAME, G.GENRE_ID " +
+                "F.RELEASE_DATE, F.DURATION, F.MPA_ID, M.NAME " +
                 "FROM FILMS F " +
                 "JOIN MPA M ON M.MPA_ID = F.MPA_ID " +
-                "LEFT JOIN GENRES G ON F.FILM_ID = G.FILM_ID " +
-                "LEFT JOIN LIKES L ON G.FILM_ID = L.FILM_ID " +
+                "LEFT JOIN LIKES L ON F.FILM_ID = L.FILM_ID " +
                 "WHERE YEAR(F.RELEASE_DATE) = ? " +
-                "GROUP BY F.FILM_ID, G.GENRE_ID ORDER BY COUNT(L.USER_ID) DESC " +
+                "GROUP BY F.FILM_ID ORDER BY COUNT(L.USER_ID) DESC " +
                 "LIMIT ?";
         Set<Film> films = new HashSet<>(jdbcTemplate.query(sql, this::mapRowToFilm, year, count));
         return new ArrayList<>(films);

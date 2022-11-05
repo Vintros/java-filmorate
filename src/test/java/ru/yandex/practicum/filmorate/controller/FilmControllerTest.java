@@ -16,7 +16,6 @@ import ru.yandex.practicum.filmorate.model.User;
 
 import java.sql.Date;
 import java.time.LocalDate;
-import java.util.HashSet;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -89,7 +88,7 @@ class FilmControllerTest {
                 .andExpect(jsonPath("$.duration").value(200));
 
         Film newFilm = new Film(1L, "Name", "Description Film", Date.valueOf(LocalDate.of( 2000, 1, 1)),
-                200L, new Mpa(1L, null), new HashSet<>());
+                200L, new Mpa(1L, null));
 
         mockMvc.perform(post("/films")
                         .content(objectMapper.writeValueAsString(newFilm))
