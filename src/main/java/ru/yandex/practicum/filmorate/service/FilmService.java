@@ -10,8 +10,8 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Map;
 
 import static ru.yandex.practicum.filmorate.validator.Validator.*;
 
@@ -51,19 +51,24 @@ public class FilmService {
         log.debug(String.format("Пользователь с id: %d удалил лайк фильма с id: %d", userId, id));
     }
 
-    public List<Film> getMostLikedFilms(Integer count) {
-        log.info(String.format("Запрошено %d популярных фильмов", count));
-        List<Film> films = getFilms();
-        Map<Long, List<Long>> usersIdLiked = filmStorage.getUsersIdLiked();
-        for (Film film : films) {
-            if (usersIdLiked.get(film.getId()) != null) {
-                film.getUsersIdLiked().addAll(usersIdLiked.get(film.getId()));
-            }
+    public List<Film> getListPopularFilm(int count, long genreId, int year) {
+        List<Film> films;
+        if (genreId != 0 && year != 0) {
+            films = filmStorage.findPopularFilmSortedByGenreAndYear(count, genreId, year);
+        } else if (genreId != 0 && year == 0) {
+            films = filmStorage.getListPopularFilmSortedByGenre(count, genreId);
+        } else if (genreId == 0 && year != 0) {
+            films = filmStorage.getListPopularFilmSortedByYear(count, year);
+        } else {
+            films = filmStorage.getListPopularFilm(count);
         }
-        return films.stream()
-                .sorted((o1, o2) -> o2.getUsersIdLiked().size() - o1.getUsersIdLiked().size())
-                .limit(count)
-                .collect(Collectors.toList());
+        return addFilmsGenres(films);
+    }
+    private List<Film> addFilmsGenres(List<Film> films) {
+        for (Film film : films) {
+            film.setGenres(genreStorage.loadFilmGenre(film));
+        }
+        return films;
     }
 
     public Film addFilm(Film film) {

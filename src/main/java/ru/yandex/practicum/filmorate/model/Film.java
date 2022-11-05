@@ -32,7 +32,7 @@ public class Film {
     private Long duration;
     @NonNull
     private Mpa mpa;
-    private final Set<Genre> genres = new TreeSet<>(Comparator.comparingLong(Genre::getId));
+    private  Set<Genre> genres = new TreeSet<>(Comparator.comparingLong(Genre::getId));
     @JsonIgnore
     private final Set<Long> usersIdLiked = new HashSet<>();
 }

@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.storage.genre;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 
 import java.sql.ResultSet;
@@ -62,5 +63,12 @@ public class DbGenreStorage implements GenreStorage {
                 rs.getString("name")
         );
         return genre;
+    }
+    public Set<Genre> loadFilmGenre(Film film) {
+        final String sqlQuery = "select G.GENRE_ID, G.NAME from GENRES FG " +
+                "join GENRE G on FG.GENRE_ID = G.GENRE_ID " +
+                "where FG.FILM_ID = ?";
+        List<Genre> res = jdbcTemplate.query(sqlQuery, this::mapRowToGenre, film.getId());
+        return new HashSet<>(res);
     }
 }
