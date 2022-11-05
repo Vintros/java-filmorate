@@ -57,5 +57,10 @@ public class FilmController {
     public void removeLikeFilm(@PathVariable Long id, @PathVariable Long userId) {
         filmService.removeLikeFilm(id, userId);
     }
+
+    @GetMapping("/common")
+    public List<Film> getCommonFilms(@RequestParam Long userId, Long friendId) {
+        return filmService.getCommonFilms(userId, friendId);
+    }
 }
 
