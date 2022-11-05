@@ -143,5 +143,17 @@ public class DbFilmStorage implements FilmStorage {
         }
         return usersIdLiked;
     }
+
+    @Override
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
+        String sqlQuery = "select films.film_id, films.name, description, release_date, duration, films.mpa_id, mpa.name " +
+                "from films join mpa on films.mpa_id = mpa.mpa_id " +
+                "join likes on likes.film_id = films.film_id " +
+                "where films.film_id in (select film_id from likes where user_id = ? " +
+                "intersect select film_id from likes where user_id = ?) " +
+                "group by films.film_id " +
+                "order by count(likes.film_id) desc;";
+        return jdbcTemplate.query(sqlQuery, this::mapRowToFilm, userId, friendId);
+    }
 }
 
