@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ExistsException;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -83,6 +84,12 @@ public class UserService {
         validateUser(id);
         log.info("Запрошен пользователь с id: {}", id);
         return userStorage.getUserById(id);
+    }
+
+    public List<Film> getRecommendations(Long id) {
+        validateUser(id);
+        log.info("Пользователем с id - {} запрошен список рекомендованных фильмов", id);
+        return userStorage.getRecommendations(id);
     }
 
     private void checkPresenceUserName(User user) {
