@@ -88,7 +88,7 @@ public class FilmService {
         log.info("Запрошен список всех фильмов");
         List<Film> films = filmStorage.getFilmsWithoutGenres();
         Map<Long, List<Genre>> genresByFilmsId = genreStorage.getGenresByFilmsId();
-        Map<Long, List<Director>> directorsByFilmsId = directorStorage.getGenresByFilmsId();
+        Map<Long, List<Director>> directorsByFilmsId = directorStorage.getDirectorsByFilmsId();
         for (Film film : films) {
             if (genresByFilmsId.get(film.getId()) != null) {
                 film.getGenres().addAll(genresByFilmsId.get(film.getId()));

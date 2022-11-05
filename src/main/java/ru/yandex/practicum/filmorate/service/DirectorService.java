@@ -16,7 +16,6 @@ import static ru.yandex.practicum.filmorate.validator.Validator.validateDirector
 public class DirectorService {
     private final DirectorStorage directorStorage;
 
-    @Autowired
     public DirectorService(DirectorStorage directorStorage) {
         this.directorStorage = directorStorage;
     }

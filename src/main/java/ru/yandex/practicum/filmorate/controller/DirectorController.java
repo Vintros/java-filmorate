@@ -12,8 +12,7 @@ import java.util.Collection;
 @RequestMapping("/directors")
 public class DirectorController {
     private final DirectorService directorService;
-
-    @Autowired
+    
     public DirectorController(DirectorService directorService) {
         this.directorService = directorService;
     }

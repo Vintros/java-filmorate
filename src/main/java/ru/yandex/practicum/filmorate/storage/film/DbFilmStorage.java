@@ -130,7 +130,7 @@ public class DbFilmStorage implements FilmStorage {
         }
         List<Film> films = jdbcTemplate.query(sql, this::mapRowToFilm, directorId);
         Map<Long, List<Genre>> genresByFilmsId = genreStorage.getGenresByFilmsId();
-        Map<Long, List<Director>> directorsByFilmsId = directorStorage.getGenresByFilmsId();
+        Map<Long, List<Director>> directorsByFilmsId = directorStorage.getDirectorsByFilmsId();
         for (Film film : films) {
             if (genresByFilmsId.get(film.getId()) != null) {
                 film.getGenres().addAll(genresByFilmsId.get(film.getId()));

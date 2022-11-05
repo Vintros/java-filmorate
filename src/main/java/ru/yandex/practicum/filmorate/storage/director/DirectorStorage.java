@@ -49,7 +49,7 @@ public interface DirectorStorage {
      */
     void removeDirectorById(Long id);
 
-    Map<Long, List<Director>> getGenresByFilmsId();
+    Map<Long, List<Director>> getDirectorsByFilmsId();
 
     List<Director> getDirectorsByFilmId(Long id);
 }

@@ -54,10 +54,10 @@ public class DbDirectorStorage implements DirectorStorage {
     }
 
     @Override
-    public Map<Long, List<Director>> getGenresByFilmsId() {
+    public Map<Long, List<Director>> getDirectorsByFilmsId() {
         String sqlQuery = "select directors.film_id, director.director_id, director.name from directors join director "
                 + "on directors.director_id = director.director_id order by directors.film_id";
-        return jdbcTemplate.query(sqlQuery, this::extractGenresByFilmId);
+        return jdbcTemplate.query(sqlQuery, this::extractDirectorsByFilmId);
     }
 
     @Override
@@ -66,7 +66,7 @@ public class DbDirectorStorage implements DirectorStorage {
         return jdbcTemplate.query(sqlQuery, new DirectorMapper(), id);
     }
 
-    private Map<Long, List<Director>> extractGenresByFilmId(ResultSet rs) throws SQLException {
+    private Map<Long, List<Director>> extractDirectorsByFilmId(ResultSet rs) throws SQLException {
         Map<Long, List<Director>> directorsByFilmId = new LinkedHashMap<>();
         while (rs.next()) {
             Long filmId = rs.getLong("directors.film_id");
