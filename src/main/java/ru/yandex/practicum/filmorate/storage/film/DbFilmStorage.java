@@ -112,6 +112,12 @@ public class DbFilmStorage implements FilmStorage {
     }
 
     @Override
+    public void removeFilmById(Long id) {
+        String sqlQuery = "delete from films where film_id = ?";
+        jdbcTemplate.update(sqlQuery, id);
+    }
+
+    @Override
     public List<Film> getFilmsByDirector(Long directorId, String sortBy) {
         String sql = "select f.film_id, f.name, f.description, f.release_date, f.duration, f.mpa_id, mpa.name, count (l.user_id) "
                 + "from films f left outer join likes l on f.film_id = l.film_id join mpa on f.mpa_id = mpa.mpa_id "

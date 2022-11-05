@@ -106,6 +106,12 @@ public class FilmService {
         return filmStorage.getFilmById(id);
     }
 
+    public void removeFilmById(Long id) {
+        validateFilm(id);
+        log.info("Фильм с id: {}, удалён из коллекции", id);
+        filmStorage.removeFilmById(id);
+    }
+
     public List<Film> getFilmsByDirector(Long directorId, String sortBy) {
         validateDirector(directorId);
         return filmStorage.getFilmsByDirector(directorId,sortBy);

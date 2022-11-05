@@ -5,8 +5,10 @@ import lombok.*;
 
 import javax.validation.constraints.*;
 import java.sql.Date;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
 
 @Data
 @AllArgsConstructor
@@ -29,7 +31,7 @@ public class Film {
     private Long duration;
     @NonNull
     private Mpa mpa;
-    private final Set<Genre> genres = new HashSet<>();
+    private final Set<Genre> genres = new TreeSet<>(Comparator.comparingLong(Genre::getId));
     private final Set<Director> directors = new HashSet<>();
     @JsonIgnore
     private final Set<Long> usersIdLiked = new HashSet<>();
