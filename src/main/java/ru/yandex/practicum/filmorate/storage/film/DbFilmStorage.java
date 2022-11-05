@@ -99,6 +99,12 @@ public class DbFilmStorage implements FilmStorage {
         return film;
     }
 
+    @Override
+    public void removeFilmById(Long id) {
+        String sqlQuery = "delete from films where film_id = ?";
+        jdbcTemplate.update(sqlQuery, id);
+    }
+
     private Film getFilmByIdWithoutGenres(Long id) {
         String sqlQuery = "select film_id, films.name, description, release_date, duration, films.mpa_id, mpa.name " +
                 "from films join mpa on films.mpa_id = mpa.mpa_id where film_id = ?";
