@@ -155,18 +155,6 @@ class FilmControllerTest {
 
     @Test
     @Sql(scripts = {"file:./src/test/java/setup_test.sql"})
-    void createFilmFailReleaseDateInFuture() throws Exception {
-        film = new Film("Name", RandomString.make(150), Date.valueOf(LocalDate.of(2555, 12, 27)), 200L, new Mpa(1L, null));
-
-        mockMvc.perform(post("/films")
-                        .content(objectMapper.writeValueAsString(film))
-                        .contentType(MediaType.APPLICATION_JSON)
-                )
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @Sql(scripts = {"file:./src/test/java/setup_test.sql"})
     void createFilmFailDuration() throws Exception {
         film = new Film("Name", RandomString.make(150), Date.valueOf(LocalDate.of(2000, 1, 1)), -200L, new Mpa(1L, null));
 

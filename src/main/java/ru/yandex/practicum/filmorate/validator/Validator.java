@@ -1,10 +1,13 @@
 package ru.yandex.practicum.filmorate.validator;
 
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.*;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.review.ReviewStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -19,11 +22,16 @@ public class Validator {
     private static FilmStorage filmStorage;
     private static UserStorage userStorage;
     private static ReviewStorage reviewStorage;
+    private static DirectorStorage directorStorage;
 
-    public Validator(FilmStorage filmStorage, UserStorage userStorage, ReviewStorage reviewStorage) {
+    public Validator(FilmStorage filmStorage,
+                     UserStorage userStorage,
+                     ReviewStorage reviewStorage,
+                     DirectorStorage directorStorage) {
         Validator.filmStorage = filmStorage;
         Validator.userStorage = userStorage;
         Validator.reviewStorage = reviewStorage;
+        Validator.directorStorage = directorStorage;
     }
 
     public static void validateUser(Long id) {
@@ -77,6 +85,22 @@ public class Validator {
             reviewStorage.getReviewById(id);
         } catch (DataAccessException e) {
             throw new UnknownReviewException(String.format("Отзыв с id: %d не найден", id));
+        }
+    }
+
+    public static void validateDirector(Long id) {
+        try {
+            directorStorage.getDirectorById(id);
+        } catch (EmptyResultDataAccessException e) {
+            throw new UnknownDirectorException(String.format("Режиссёр с id: %d не найден", id));
+        }
+    }
+
+    public static void validateDirectorNotExist(Director director) {
+        try {
+            directorStorage.getDirectorById(director.getId());
+            throw new ExistsException("Режиссёр уже существует");
+        } catch (EmptyResultDataAccessException ignored) {
         }
     }
 }
