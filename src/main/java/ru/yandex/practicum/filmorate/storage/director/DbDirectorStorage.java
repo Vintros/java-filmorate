@@ -3,9 +3,12 @@ package ru.yandex.practicum.filmorate.storage.director;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Director;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
@@ -34,17 +37,20 @@ public class DbDirectorStorage implements DirectorStorage {
     @Override
     public Director addDirector(Director director) {
         String sqlQuery = "insert into director (name) values (?)";
-        jdbcTemplate.update(sqlQuery, director.getName());
-        String sqlQuery2 = "select director_id, name from director where name = ?";
-        return jdbcTemplate.queryForObject(sqlQuery2, new DirectorMapper(), director.getName());
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(sqlQuery, new String[] {"director_id"});
+            ps.setString(1, director.getName());
+            return ps;
+        }, keyHolder);
+        return getDirectorById(Objects.requireNonNull(keyHolder.getKey()).longValue());
     }
 
     @Override
     public Director updateDirector(Director director) {
         String sqlQuery = "update director set name = ? where director_id = ?";
         jdbcTemplate.update(sqlQuery, director.getName(), director.getId());
-        String sqlQuery2 = "select director_id, name from director where name = ?";
-        return jdbcTemplate.queryForObject(sqlQuery2, new DirectorMapper(), director.getName());
+        return getDirectorById(director.getId());
     }
 
     @Override
