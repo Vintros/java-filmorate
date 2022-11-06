@@ -157,6 +157,34 @@ public class DbFilmStorage implements FilmStorage {
         }
     }
 
+    @Override
+    public List<Film> getRecommendations(Long id) {
+        String sqlQuery = "SELECT USER_ID, FILM_ID FROM LIKES GROUP BY USER_ID, FILM_ID";
+        List<Film> result = new ArrayList<>();
+
+        // Получаем список Entry с id_user (key) и id_film (value)
+        List<Map.Entry<Long, Long>> dataList = jdbcTemplate.query(sqlQuery, this::mapRowToMapEntry);
+        if (dataList.isEmpty()) return result;
+
+        // Составляем мапу данных для алгоритма
+        Map<Long, ArrayList<Long>> data = getDataMap(dataList);
+        if (data.isEmpty()) return result;
+
+        // Ищем пользователя с которым имеется максимальное количество перечений
+        Long mostIntersectionsUserId = getMostIntersectionsUserId(id, data);
+        if (mostIntersectionsUserId == null) return result;
+
+        // Получаем список фильмов-рекомендаций
+
+        for (Long otherFilmId : data.get(mostIntersectionsUserId)) {
+            if (!data.get(id).contains(otherFilmId)) {
+                result.add(this.getFilmById(otherFilmId));
+            }
+        }
+
+        return result;
+    }
+
     private Film mapRowToFilm(ResultSet rs, int rowNum) throws SQLException {
         Film film = new Film(
                 rs.getLong("film_id"),
@@ -180,6 +208,51 @@ public class DbFilmStorage implements FilmStorage {
             usersIdLiked.get(filmId).add(userId);
         }
         return usersIdLiked;
+    }
+
+
+    private Map.Entry<Long, Long> mapRowToMapEntry(ResultSet rs, int rowNum) throws SQLException {
+        Long filmId = rs.getLong("film_id");
+        Long userId = rs.getLong("user_id");
+        return new AbstractMap.SimpleEntry<>(userId, filmId);
+    }
+
+    private static Map<Long, ArrayList<Long>> getDataMap(List<Map.Entry<Long, Long>> dataList) {
+        Map<Long, ArrayList<Long>> data = new HashMap<>();
+        for (Map.Entry<Long, Long> entry : dataList) {
+            Long entryKey = entry.getKey();
+            if (data.containsKey(entryKey)) {
+                Long value = entry.getValue();
+                data.get(entryKey).add(value);
+            } else {
+                data.put(entryKey, new ArrayList<>(Collections.singletonList(entry.getValue())));
+            }
+        }
+        return data;
+    }
+
+    private static Long getMostIntersectionsUserId(Long id, Map<Long, ArrayList<Long>> data) {
+        Map<Long, Integer> frequency = new HashMap<>();
+        for (Long userFilmId : data.get(id)) {
+            for (Map.Entry<Long, ArrayList<Long>> user : data.entrySet()) {
+                if (!user.getKey().equals(id)) {
+                    if (user.getValue().contains(userFilmId)) {
+                        if (frequency.containsKey(user.getKey())) {
+                            frequency.replace(user.getKey(), frequency.get(user.getKey()) + 1);
+                        } else {
+                            frequency.put(user.getKey(), 1);
+                        }
+                    }
+                }
+            }
+        }
+
+        Optional<Map.Entry<Long, Integer>> mostIntersectionsUser = frequency.entrySet().stream().max(Map.Entry.comparingByValue());
+        Long mostIntersectionsUserId = null;
+        if (mostIntersectionsUser.isPresent()) {
+            mostIntersectionsUserId = mostIntersectionsUser.get().getKey();
+        }
+        return mostIntersectionsUserId;
     }
 
     public List<Film> getListPopularFilm(long count) {
