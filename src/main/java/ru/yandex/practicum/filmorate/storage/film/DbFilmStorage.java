@@ -86,12 +86,6 @@ public class DbFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Map<Long, List<Long>> getUsersIdLiked() {
-        String sqlQuery = "select film_id, user_id from likes";
-        return jdbcTemplate.query(sqlQuery, this::extractUsersIdLiked);
-    }
-
-    @Override
     public List<Film> getFilmsWithoutGenres() {
         String sqlQuery = "select film_id, films.name, description, release_date, duration, films.mpa_id, mpa.name " +
                 "from films left join mpa on films.mpa_id = mpa.mpa_id";
@@ -259,6 +253,58 @@ public class DbFilmStorage implements FilmStorage {
             mostIntersectionsUserId = mostIntersectionsUser.get().getKey();
         }
         return mostIntersectionsUserId;
+    }
+
+    public List<Film> getListPopularFilm(long count) {
+        final String sqlQuery = "SELECT F.FILM_ID, F.NAME, F.DESCRIPTION, " +
+                "F.RELEASE_DATE, F.DURATION, F.MPA_ID, M.NAME " +
+                "from FILMS F " +
+                "join MPA M on M.MPA_ID = F.MPA_ID " +
+                "left join LIKES L on F.FILM_ID = L.FILM_ID " +
+                "group by F.FILM_ID order by count(L.USER_ID) desc " +
+                "limit ?";
+        return jdbcTemplate.query(sqlQuery, this::mapRowToFilm, count);
+    }
+
+    public List<Film> getListPopularFilmSortedByYear(int count, int year) {
+        final String sql = "SELECT F.FILM_ID, F.NAME, F.DESCRIPTION, " +
+                "F.RELEASE_DATE, F.DURATION, F.MPA_ID, M.NAME " +
+                "FROM FILMS F " +
+                "JOIN MPA M ON M.MPA_ID = F.MPA_ID " +
+                "LEFT JOIN LIKES L ON F.FILM_ID = L.FILM_ID " +
+                "WHERE YEAR(F.RELEASE_DATE) = ? " +
+                "GROUP BY F.FILM_ID ORDER BY COUNT(L.USER_ID) DESC " +
+                "LIMIT ?";
+        Set<Film> films = new HashSet<>(jdbcTemplate.query(sql, this::mapRowToFilm, year, count));
+        return new ArrayList<>(films);
+    }
+
+    public List<Film> getListPopularFilmSortedByGenre(int count, long genreId) {
+        final String sql = "SELECT F.FILM_ID, F.NAME, F.DESCRIPTION, " +
+                "F.RELEASE_DATE, F.DURATION, F.MPA_ID, M.NAME, G.GENRE_ID " +
+                "FROM FILMS F " +
+                "JOIN MPA M ON M.MPA_ID = F.MPA_ID " +
+                "LEFT JOIN GENRES G ON F.FILM_ID = G.FILM_ID " +
+                "LEFT JOIN LIKES L ON F.FILM_ID = L.FILM_ID " +
+                "WHERE G.GENRE_ID = ? " +
+                "GROUP BY F.FILM_ID, G.GENRE_ID ORDER BY COUNT(L.USER_ID) DESC " +
+                "LIMIT ?";
+        Set<Film> films = new HashSet<>(jdbcTemplate.query(sql, this::mapRowToFilm, genreId, count));
+        return new ArrayList<>(films);
+    }
+
+    public List<Film> findPopularFilmSortedByGenreAndYear(int count, long genreId, int year) {
+        final String sql = "SELECT F.FILM_ID, F.NAME, F.DESCRIPTION, " +
+                "F.RELEASE_DATE, F.DURATION, F.MPA_ID, M.NAME, G.GENRE_ID " +
+                "FROM FILMS F " +
+                "JOIN MPA M ON M.MPA_ID = F.MPA_ID " +
+                "LEFT JOIN GENRES G ON F.FILM_ID = G.FILM_ID " +
+                "LEFT JOIN LIKES L ON F.FILM_ID = L.FILM_ID " +
+                "WHERE G.GENRE_ID = ? AND YEAR(F.RELEASE_DATE) = ? " +
+                "GROUP BY F.FILM_ID, G.GENRE_ID ORDER BY COUNT(L.USER_ID) DESC " +
+                "LIMIT ?";
+        Set<Film> films = new HashSet<>(jdbcTemplate.query(sql, this::mapRowToFilm, genreId, year, count));
+        return new ArrayList<>(films);
     }
 }
 

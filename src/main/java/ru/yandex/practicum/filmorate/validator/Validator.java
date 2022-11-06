@@ -103,4 +103,10 @@ public class Validator {
         } catch (EmptyResultDataAccessException ignored) {
         }
     }
+
+    public static void validateGenreAndYear(Integer genreId, Integer year) {
+        if (year != null && year < 1895 || genreId != null && genreId <= 0) {
+            throw new RuntimeException("Неправильный запрос");
+        }
+    }
 }
