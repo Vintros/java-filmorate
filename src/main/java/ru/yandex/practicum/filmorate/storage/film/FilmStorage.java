@@ -24,4 +24,6 @@ public interface FilmStorage {
     void removeFilmById(Long id);
 
     List<Film> getFilmsByDirector(Long directorId, String sortBy);
+
+    List<Film> getRecommendations(Long id);
 }

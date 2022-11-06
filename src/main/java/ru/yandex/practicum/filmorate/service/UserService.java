@@ -3,7 +3,9 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ExistsException;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.ArrayList;
@@ -17,9 +19,11 @@ import static ru.yandex.practicum.filmorate.validator.Validator.validateUserNotE
 public class UserService {
 
     private final UserStorage userStorage;
+    private final FilmStorage filmStorage;
 
-    public UserService(UserStorage userStorage) {
+    public UserService(UserStorage userStorage, FilmStorage filmStorage) {
         this.userStorage = userStorage;
+        this.filmStorage = filmStorage;
     }
 
     public void addFriend(Long id, Long friendId) {
@@ -89,6 +93,12 @@ public class UserService {
         validateUser(id);
         log.info("удалён пользователь с id: {}", id);
         userStorage.removeUserById(id);
+    }
+
+    public List<Film> getRecommendations(Long id) {
+        validateUser(id);
+        log.info("Пользователем с id - {} запрошен список рекомендованных фильмов", id);
+        return filmStorage.getRecommendations(id);
     }
 
     private void checkPresenceUserName(User user) {
