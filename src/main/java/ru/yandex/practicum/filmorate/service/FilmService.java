@@ -124,6 +124,7 @@ public class FilmService {
 
     public List<Film> searchFilmsByTitleOrDirector(String query, String by) {
         log.info("Получен поисковый запрос: {}. Парамент поиска: {}", query, by);
+        validateSearchParameter(by);
         switch (by) {
             case "title": return filmStorage.searchFilmsByTitle(query);
             case "director": return filmStorage.searchFilmsByDirector(query);

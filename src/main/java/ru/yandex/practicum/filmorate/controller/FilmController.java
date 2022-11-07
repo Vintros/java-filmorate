@@ -2,7 +2,6 @@ package ru.yandex.practicum.filmorate.controller;
 
 import org.springframework.web.bind.annotation.*;
 
-import ru.yandex.practicum.filmorate.exception.IncorrectSearchParameterException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
@@ -73,15 +72,8 @@ public class FilmController {
 
     @GetMapping("/search")
     public List<Film> searchFilmsByTitleOrDirector(@RequestParam String query,
-                                                @RequestParam(defaultValue = "title") String by) {
-        validateSearchParameter(by);
+                                                   @RequestParam(defaultValue = "title") String by) {
         return filmService.searchFilmsByTitleOrDirector(query, by);
-    }
-
-    private static void validateSearchParameter(String by) {
-        if (!by.equals("title") && !by.equals("director") && !by.equals("title,director") && !by.equals("director,title")) {
-            throw new IncorrectSearchParameterException("Введен некорректный параметр поиска. Доступные значения: title; director, title,director; director,title");
-        }
     }
 }
 
