@@ -22,7 +22,7 @@ public class ErrorHandler {
         return new ErrorResponse(e.getMessage());
     }
 
-    @ExceptionHandler(value = {ExistsException.class, ValidationException.class})
+    @ExceptionHandler(value = {ExistsException.class, ValidationException.class, IncorrectSearchParameterException.class})
     @ResponseStatus(value = HttpStatus.BAD_REQUEST)
     public ErrorResponse handleAlreadyExists(final RuntimeException e) {
         log.error(e.getMessage());
