@@ -17,8 +17,6 @@ public interface FilmStorage {
 
     void removeLikeFilm(Long id, Long userId);
 
-    Map<Long, List<Long>> getUsersIdLiked();
-
     Film getFilmById(Long id);
 
     void removeFilmById(Long id);
