@@ -66,6 +66,11 @@ public class FilmController {
         filmService.removeLikeFilm(id, userId);
     }
 
+    @GetMapping("/common")
+    public List<Film> getCommonFilms(@RequestParam Long userId, @RequestParam Long friendId) {
+        return filmService.getCommonFilms(userId, friendId);
+    }
+
     @GetMapping("/search")
     public List<Film> searchFilmsByTitleOrDirector(@RequestParam String query,
                                                 @RequestParam(defaultValue = "title") String by) {

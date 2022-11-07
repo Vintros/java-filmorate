@@ -311,6 +311,20 @@ public class DbFilmStorage implements FilmStorage {
     }
 
     @Override
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
+        String sqlQuery = "select f.film_id, f.name, f.description, f.release_date, f.duration, f.mpa_id, mpa.name " +
+                "from films f join mpa on f.mpa_id = mpa.mpa_id " +
+                "join likes l on l.film_id = f.film_id " +
+                "where f.film_id in (select film_id from likes where user_id = ? " +
+                "intersect select film_id from likes where user_id = ?) " +
+                "group by f.film_id " +
+                "order by count(l.film_id) desc;";
+        return jdbcTemplate.query(sqlQuery, this::mapRowToFilm, userId, friendId);
+    }
+
+
+
+    @Override
     public List<Film> searchFilmsByTitle(String query) {
         // Получаем список данных ID фильма + Название фильма
         final String sqlQuery = "SELECT NAME, FILM_ID FROM FILMS";

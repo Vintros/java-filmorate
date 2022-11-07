@@ -102,17 +102,7 @@ public class FilmService {
     public List<Film> getFilms() {
         log.info("Запрошен список всех фильмов");
         List<Film> films = filmStorage.getFilmsWithoutGenres();
-        Map<Long, List<Genre>> genresByFilmsId = genreStorage.getGenresByFilmsId();
-        Map<Long, List<Director>> directorsByFilmsId = directorStorage.getDirectorsByFilmsId();
-        for (Film film : films) {
-            if (genresByFilmsId.get(film.getId()) != null) {
-                film.getGenres().addAll(genresByFilmsId.get(film.getId()));
-            }
-            if (directorsByFilmsId.get(film.getId()) != null) {
-                film.getDirectors().addAll(directorsByFilmsId.get(film.getId()));
-            }
-        }
-        return films;
+        return populateFilmsWithGenresAndDirectors(films);
     }
 
     public Film getFilmById(Long id) {
@@ -142,5 +132,27 @@ public class FilmService {
                 return filmStorage.searchFilmsByTitleAndDirector(query);
             default: return new ArrayList<>();
         }
+    }
+
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
+        validateUser(userId);
+        validateUser(friendId);
+        log.info("Запрошен список общих фильмов пользлователей с id: {} и {}", userId, friendId);
+        List<Film> films = filmStorage.getCommonFilms(userId, friendId);
+        return populateFilmsWithGenresAndDirectors(films);
+    }
+
+    private List<Film> populateFilmsWithGenresAndDirectors(List<Film> films) {
+        Map<Long, List<Genre>> genresByFilmsId = genreStorage.getGenresByFilmsId();
+        Map<Long, List<Director>> directorsByFilmsId = directorStorage.getDirectorsByFilmsId();
+        for (Film film : films) {
+            if (genresByFilmsId.get(film.getId()) != null) {
+                film.getGenres().addAll(genresByFilmsId.get(film.getId()));
+            }
+            if (directorsByFilmsId.get(film.getId()) != null) {
+                film.getDirectors().addAll(directorsByFilmsId.get(film.getId()));
+            }
+        }
+        return films;
     }
 }
