@@ -5,13 +5,15 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ExistsException;
 import ru.yandex.practicum.filmorate.exception.UnknownUserException;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Map;
 
 import static ru.yandex.practicum.filmorate.validator.Validator.*;
 
@@ -21,10 +23,12 @@ public class FilmService {
 
     private final FilmStorage filmStorage;
     private final GenreStorage genreStorage;
+    private final DirectorStorage directorStorage;
 
-    public FilmService(FilmStorage filmStorage, GenreStorage genreStorage) {
+    public FilmService(FilmStorage filmStorage, GenreStorage genreStorage, DirectorStorage directorStorage) {
         this.filmStorage = filmStorage;
         this.genreStorage = genreStorage;
+        this.directorStorage = directorStorage;
     }
 
     public void addLikeFilm(Long id, Long userId) {
@@ -51,19 +55,32 @@ public class FilmService {
         log.debug(String.format("Пользователь с id: %d удалил лайк фильма с id: %d", userId, id));
     }
 
-    public List<Film> getMostLikedFilms(Integer count) {
-        log.info(String.format("Запрошено %d популярных фильмов", count));
-        List<Film> films = getFilms();
-        Map<Long, List<Long>> usersIdLiked = filmStorage.getUsersIdLiked();
+    public List<Film> getListPopularFilm(Integer count, Integer genreId, Integer year) {
+        validateGenreAndYear(genreId,year);
+        List<Film> films;
+        if (genreId != null && year != null) {
+            log.info(String.format("Запрошено %d популярных фильмов по жанру №%d и %d году", count, genreId, year));
+            films = filmStorage.findPopularFilmSortedByGenreAndYear(count, genreId, year);
+        } else if (genreId != null) {
+            log.info(String.format("Запрошено %d популярных фильмов по жанру №%d", count, genreId));
+            films = filmStorage.getListPopularFilmSortedByGenre(count, genreId);
+        } else if (year != null) {
+            log.info(String.format("Запрошено %d популярных фильмов по %d году", count, year));
+            films = filmStorage.getListPopularFilmSortedByYear(count, year);
+        } else {
+            log.info(String.format("Запрошено %d популярных фильмов", count));
+            films = filmStorage.getListPopularFilm(count);
+        }
+        return addFilmsGenres(films);
+    }
+    private List<Film> addFilmsGenres(List<Film> films) {
+        Map<Long, List<Genre>> genresByFilmsId = genreStorage.getGenresByFilmsId();
         for (Film film : films) {
-            if (usersIdLiked.get(film.getId()) != null) {
-                film.getUsersIdLiked().addAll(usersIdLiked.get(film.getId()));
+            if (genresByFilmsId.get(film.getId()) != null) {
+                film.getGenres().addAll(genresByFilmsId.get(film.getId()));
             }
         }
-        return films.stream()
-                .sorted((o1, o2) -> o2.getUsersIdLiked().size() - o1.getUsersIdLiked().size())
-                .limit(count)
-                .collect(Collectors.toList());
+        return films;
     }
 
     public Film addFilm(Film film) {
@@ -83,6 +100,17 @@ public class FilmService {
     public List<Film> getFilms() {
         log.info("Запрошен список всех фильмов");
         List<Film> films = filmStorage.getFilmsWithoutGenres();
+        Map<Long, List<Genre>> genresByFilmsId = genreStorage.getGenresByFilmsId();
+        Map<Long, List<Director>> directorsByFilmsId = directorStorage.getDirectorsByFilmsId();
+        for (Film film : films) {
+            if (genresByFilmsId.get(film.getId()) != null) {
+                film.getGenres().addAll(genresByFilmsId.get(film.getId()));
+            }
+            if (directorsByFilmsId.get(film.getId()) != null) {
+                film.getDirectors().addAll(directorsByFilmsId.get(film.getId()));
+            }
+        }
+        return films;
         return populateFilmsWithGenres(films);
     }
 
@@ -96,6 +124,11 @@ public class FilmService {
         validateFilm(id);
         log.info("Фильм с id: {}, удалён из коллекции", id);
         filmStorage.removeFilmById(id);
+    }
+
+    public List<Film> getFilmsByDirector(Long directorId, String sortBy) {
+        validateDirector(directorId);
+        return filmStorage.getFilmsByDirector(directorId,sortBy);
     }
 
     public List<Film> getCommonFilms(Long userId, Long friendId) {

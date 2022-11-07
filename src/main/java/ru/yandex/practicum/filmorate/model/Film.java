@@ -25,7 +25,6 @@ public class Film {
     @Size(max = 200, message = "Описание должно быть не более 200 символов")
     private String description;
     @NonNull
-    @PastOrPresent(message = "Некорректная дата фильма")
     private Date releaseDate;
     @NonNull
     @Positive
@@ -33,6 +32,7 @@ public class Film {
     @NonNull
     private Mpa mpa;
     private final Set<Genre> genres = new TreeSet<>(Comparator.comparingLong(Genre::getId));
+    private final Set<Director> directors = new HashSet<>();
     @JsonIgnore
     private final Set<Long> usersIdLiked = new HashSet<>();
 }

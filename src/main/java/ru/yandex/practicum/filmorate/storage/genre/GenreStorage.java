@@ -18,4 +18,5 @@ public interface GenreStorage {
     List<Genre> getGenresByFilmId(Long id);
 
     Map<Long, List<Genre>> getGenresByFilmsId();
+
 }
