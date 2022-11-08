@@ -103,8 +103,6 @@ public class DbFilmStorage implements FilmStorage {
         List<Director> directors = directorStorage.getDirectorsByFilmId(id);
         directors.sort((d1, d2) -> (int) (d1.getId() - d2.getId()));
         film.getDirectors().addAll(directors);
-        List<Long> likes = getLikesByFilmId(id);
-        film.getUsersIdLiked().addAll(likes);
         return film;
     }
 
@@ -325,7 +323,7 @@ public class DbFilmStorage implements FilmStorage {
 
 
     @Override
-    public List<Film> searchFilmsByTitle(String query) {
+    public List<Film> searchFilmsWithoutGenresAndDirectorsByTitle(String query) {
         // Получаем список данных ID фильма + Название фильма
         final String sqlQuery = "SELECT NAME, FILM_ID FROM FILMS";
         List<Map.Entry<Long, String>> dataList = jdbcTemplate.query(sqlQuery, this::mapRowToMapEntryFilmIdFilmName);
@@ -345,7 +343,7 @@ public class DbFilmStorage implements FilmStorage {
     }
 
     @Override
-    public List<Film> searchFilmsByDirector(String query) {
+    public List<Film> searchFilmsWithoutGenresAndDirectorsByDirector(String query) {
         // Получаем список данных Имя директора + ID фильма
         final String sqlQuery = "SELECT DIR.NAME AS DIRECTOR_NAME, DIRS.FILM_ID FROM DIRECTORS AS DIRS " +
                 "LEFT JOIN DIRECTOR AS DIR ON DIRS.DIRECTOR_ID = DIR.DIRECTOR_ID";
@@ -365,10 +363,10 @@ public class DbFilmStorage implements FilmStorage {
     }
 
     @Override
-    public List<Film> searchFilmsByTitleAndDirector(String query) {
+    public List<Film> searchFilmsWithoutGenresAndDirectorsByTitleAndDirector(String query) {
         List<Film> result = new ArrayList<>();
-        List<Film> filmsByTitle = searchFilmsByTitle(query);
-        List<Film> filmsByDirector = searchFilmsByDirector(query);
+        List<Film> filmsByTitle = searchFilmsWithoutGenresAndDirectorsByTitle(query);
+        List<Film> filmsByDirector = searchFilmsWithoutGenresAndDirectorsByDirector(query);
 
         result.addAll(filmsByTitle);
         result.addAll(filmsByDirector);
@@ -389,19 +387,42 @@ public class DbFilmStorage implements FilmStorage {
     }
 
     private List<Film> getFilmsSortedByPopularity(List<Long> matchingIds) {
-        return matchingIds.stream()
-                .map(this::getFilmById)
-                .sorted(Comparator.comparing(Film::getRate).reversed())
+        String inSql = String.join(",", Collections.nCopies(matchingIds.size(), "?"));
+        String sqlQuery = String.format("SELECT film_id, films.name, description, release_date, duration, films.mpa_id, mpa.name " +
+                "FROM films LEFT JOIN mpa ON films.mpa_id = mpa.mpa_id " +
+                "WHERE film_id in (%s)", inSql);
+
+        List<Film> result = jdbcTemplate.query(sqlQuery, matchingIds.toArray(), this::mapRowToFilm);
+
+        return populateFilmsWithLikes(result);
+    }
+
+    private List<Film> populateFilmsWithLikes(List<Film> films) {
+        Map<Long, List<Long>> likesByFilmsId = this.getLikesByFilmsId();
+        for (Film film : films) {
+            if (likesByFilmsId.get(film.getId()) != null) {
+                film.getUsersIdLiked().addAll(likesByFilmsId.get(film.getId()));
+            }
+        }
+        return films.stream()
+                .sorted(Comparator.comparing(Film::getRate))
                 .collect(Collectors.toList());
     }
 
-    private List<Long> getLikesByFilmId(Long id) {
-        String sqlQuery = "SELECT USER_ID FROM LIKES WHERE FILM_ID = ?";
-        return jdbcTemplate.query(sqlQuery, this::mapRowToLong, id);
+    private Map<Long, List<Long>> getLikesByFilmsId() {
+        String sqlQuery = "select film_id, user_id from likes";
+        return jdbcTemplate.query(sqlQuery, this::extractLikesByFilmId);
     }
 
-    private Long mapRowToLong(ResultSet resultSet, int i) throws SQLException {
-        return resultSet.getLong("user_id");
+    private Map<Long, List<Long>> extractLikesByFilmId(ResultSet rs) throws SQLException {
+        Map<Long, List<Long>> likesByFilmId = new LinkedHashMap<>();
+        while (rs.next()) {
+            Long filmId = rs.getLong("film_id");
+            Long userId = rs.getLong("user_id");
+            likesByFilmId.putIfAbsent(filmId, new ArrayList<>());
+            likesByFilmId.get(filmId).add(userId);
+        }
+        return likesByFilmId;
     }
 }
 

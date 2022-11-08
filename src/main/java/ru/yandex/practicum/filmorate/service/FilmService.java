@@ -125,14 +125,22 @@ public class FilmService {
     public List<Film> searchFilmsByTitleOrDirector(String query, String by) {
         log.info("Получен поисковый запрос: {}. Парамент поиска: {}", query, by);
         validateSearchParameter(by);
-        switch (by) {
-            case "title": return filmStorage.searchFilmsByTitle(query);
-            case "director": return filmStorage.searchFilmsByDirector(query);
+        List<Film> films;
+                switch (by) {
+            case "title":
+                films = filmStorage.searchFilmsWithoutGenresAndDirectorsByTitle(query);
+                break;
+            case "director":
+                films = filmStorage.searchFilmsWithoutGenresAndDirectorsByDirector(query);
+                break;
             case "title,director":
             case "director,title":
-                return filmStorage.searchFilmsByTitleAndDirector(query);
-            default: return new ArrayList<>();
+                films = filmStorage.searchFilmsWithoutGenresAndDirectorsByTitleAndDirector(query);
+                break;
+            default:
+                films = new ArrayList<>();
         }
+        return populateFilmsWithGenresAndDirectors(films);
     }
 
     public List<Film> getCommonFilms(Long userId, Long friendId) {
