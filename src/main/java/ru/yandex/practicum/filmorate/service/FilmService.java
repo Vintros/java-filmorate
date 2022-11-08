@@ -89,14 +89,12 @@ public class FilmService {
 
     public Film addFilm(Film film) {
         validateFilmNotExist(film);
-        validateFilmDate(film);
         log.info("Фильм {} добавлен в коллекцию", film.getName());
         return filmStorage.addFilm(film);
     }
 
     public Film updateFilm(Film film) {
         validateFilm(film.getId());
-        validateFilmDate(film);
         log.info("Фильм {} обновлен", film.getName());
         return filmStorage.updateFilm(film);
     }
