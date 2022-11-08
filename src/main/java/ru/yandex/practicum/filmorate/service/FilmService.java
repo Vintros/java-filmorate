@@ -1,18 +1,22 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ExistsException;
 import ru.yandex.practicum.filmorate.exception.UnknownUserException;
 import ru.yandex.practicum.filmorate.model.Director;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
+import ru.yandex.practicum.filmorate.storage.feed.FeedStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -20,17 +24,13 @@ import static ru.yandex.practicum.filmorate.validator.Validator.*;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class FilmService {
 
     private final FilmStorage filmStorage;
     private final GenreStorage genreStorage;
     private final DirectorStorage directorStorage;
-
-    public FilmService(FilmStorage filmStorage, GenreStorage genreStorage, DirectorStorage directorStorage) {
-        this.filmStorage = filmStorage;
-        this.genreStorage = genreStorage;
-        this.directorStorage = directorStorage;
-    }
+    private final FeedStorage feedStorage;
 
     public void addLikeFilm(Long id, Long userId) {
         validateFilm(id);
@@ -41,6 +41,7 @@ public class FilmService {
                     userId, id));
         }
         filmStorage.addLikeFilm(id, userId);
+        feedStorage.saveUserEvent(new Event(userId, id, "LIKE", "ADD", new Date()));
         log.debug(String.format("Пользователь с id: %d поставил лайк фильму с id: %d", userId, id));
     }
 
@@ -53,6 +54,7 @@ public class FilmService {
             throw new UnknownUserException(String.format("Пользователь с id: %d не ставил лайк фильму с id: %d",
                     userId, id));
         }
+        feedStorage.saveUserEvent(new Event(userId, id, "LIKE", "REMOVE", new Date()));
         log.debug(String.format("Пользователь с id: %d удалил лайк фильма с id: %d", userId, id));
     }
 
