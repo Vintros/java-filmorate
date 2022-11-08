@@ -35,4 +35,8 @@ public class Film {
     private final Set<Director> directors = new HashSet<>();
     @JsonIgnore
     private final Set<Long> usersIdLiked = new HashSet<>();
+
+    public int getRate() {
+        return usersIdLiked.size();
+    }
 }
