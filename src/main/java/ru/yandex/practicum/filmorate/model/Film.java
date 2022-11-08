@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
+import ru.yandex.practicum.filmorate.validator.annotation.AfterCinemaBirthday;
 
 import javax.validation.constraints.*;
 import java.sql.Date;
@@ -25,6 +26,7 @@ public class Film {
     @Size(max = 200, message = "Описание должно быть не более 200 символов")
     private String description;
     @NonNull
+    @AfterCinemaBirthday
     private Date releaseDate;
     @NonNull
     @Positive
