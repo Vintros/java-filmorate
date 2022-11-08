@@ -18,7 +18,6 @@ import java.sql.Date;
 @Service
 public class Validator {
 
-    private static final Date MOVIE_BIRTHDAY = Date.valueOf(LocalDate.of(1895, 12, 28));
     private static FilmStorage filmStorage;
     private static UserStorage userStorage;
     private static ReviewStorage reviewStorage;
@@ -53,12 +52,6 @@ public class Validator {
             filmStorage.getFilmById(id);
         } catch (DataAccessException e) {
             throw new UnknownFilmException(String.format("Фильм с id: %d не найден", id));
-        }
-    }
-
-    public static void validateFilmDate(Film film) {
-        if (film.getReleaseDate().before(MOVIE_BIRTHDAY)) {
-            throw new ValidationException("Ошибка валидации, дата релиза раньше 28 декабря 1895 года");
         }
     }
 
