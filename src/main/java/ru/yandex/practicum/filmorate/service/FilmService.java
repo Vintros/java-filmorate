@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
@@ -22,20 +23,13 @@ import static ru.yandex.practicum.filmorate.validator.Validator.*;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class FilmService {
 
     private final FilmStorage filmStorage;
     private final GenreStorage genreStorage;
     private final DirectorStorage directorStorage;
     private final FeedStorage feedStorage;
-
-    public FilmService(FilmStorage filmStorage, GenreStorage genreStorage, DirectorStorage directorStorage,
-                       FeedStorage feedStorage) {
-        this.filmStorage = filmStorage;
-        this.genreStorage = genreStorage;
-        this.directorStorage = directorStorage;
-        this.feedStorage = feedStorage;
-    }
 
     public void addLikeFilm(Long id, Long userId) {
         validateFilm(id);
