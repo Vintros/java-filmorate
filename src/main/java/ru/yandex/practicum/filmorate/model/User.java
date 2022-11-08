@@ -11,7 +11,6 @@ import java.util.Set;
 
 @Data
 @AllArgsConstructor
-@RequiredArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(exclude = {"friends"})
 public class User {

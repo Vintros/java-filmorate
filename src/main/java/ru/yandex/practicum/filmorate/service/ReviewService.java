@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.Event;
@@ -14,16 +15,11 @@ import static ru.yandex.practicum.filmorate.validator.Validator.*;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class ReviewService {
 
     private final ReviewStorage reviewStorage;
     private final FeedStorage feedStorage;
-
-    public ReviewService(ReviewStorage reviewStorage, FeedStorage feedStorage) {
-        this.reviewStorage = reviewStorage;
-        this.feedStorage = feedStorage;
-    }
-
 
     public Review addReview(Review review) {
         validateFilm(review.getFilmId());

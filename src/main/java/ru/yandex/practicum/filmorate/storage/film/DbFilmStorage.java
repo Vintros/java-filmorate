@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
-import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -17,7 +16,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Repository
-@Primary
 public class DbFilmStorage implements FilmStorage {
 
     private final JdbcTemplate jdbcTemplate;
@@ -200,18 +198,6 @@ public class DbFilmStorage implements FilmStorage {
         return film;
     }
 
-    private Map<Long, List<Long>> extractUsersIdLiked(ResultSet rs) throws SQLException {
-        Map<Long, List<Long>> usersIdLiked = new LinkedHashMap<>();
-        while (rs.next()) {
-            Long filmId = rs.getLong("film_id");
-            usersIdLiked.putIfAbsent(filmId, new ArrayList<>());
-            Long userId = rs.getLong("user_id");
-            usersIdLiked.get(filmId).add(userId);
-        }
-        return usersIdLiked;
-    }
-
-
     private Map.Entry<Long, Long> mapRowToMapEntryLongLong(ResultSet rs, int rowNum) throws SQLException {
         Long filmId = rs.getLong("film_id");
         Long userId = rs.getLong("user_id");
@@ -392,7 +378,7 @@ public class DbFilmStorage implements FilmStorage {
                 "FROM films LEFT JOIN mpa ON films.mpa_id = mpa.mpa_id " +
                 "WHERE film_id in (%s)", inSql);
 
-        List<Film> result = jdbcTemplate.query(sqlQuery, matchingIds.toArray(), this::mapRowToFilm);
+        List<Film> result = jdbcTemplate.query(sqlQuery, this::mapRowToFilm, matchingIds.toArray());
 
         return populateFilmsWithLikes(result);
     }

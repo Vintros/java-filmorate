@@ -12,7 +12,6 @@ import java.util.TreeSet;
 
 @Data
 @AllArgsConstructor
-@RequiredArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(exclude = {"mpa", "genres", "usersIdLiked"})
 public class Film {

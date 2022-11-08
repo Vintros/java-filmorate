@@ -4,7 +4,6 @@ import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.service.ReviewService;
 
-import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -18,12 +17,12 @@ public class ReviewController {
     }
 
     @PostMapping
-    public Review addReview(@Valid @RequestBody Review review) {
+    public Review addReview(@RequestBody Review review) {
         return reviewService.addReview(review);
     }
 
     @PutMapping
-    public Review updateReviewById(@Valid @RequestBody Review review) {
+    public Review updateReviewById(@RequestBody Review review) {
         return reviewService.updateReviewById(review);
     }
 

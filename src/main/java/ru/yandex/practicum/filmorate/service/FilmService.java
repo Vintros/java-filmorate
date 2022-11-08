@@ -42,7 +42,7 @@ public class FilmService {
         }
         filmStorage.addLikeFilm(id, userId);
         feedStorage.saveUserEvent(new Event(userId, id, "LIKE", "ADD", new Date()));
-        log.debug(String.format("Пользователь с id: %d поставил лайк фильму с id: %d", userId, id));
+        log.debug("Пользователь с id: {} поставил лайк фильму с id: {}", userId, id);
     }
 
     public void removeLikeFilm(Long id, Long userId) {
@@ -55,23 +55,23 @@ public class FilmService {
                     userId, id));
         }
         feedStorage.saveUserEvent(new Event(userId, id, "LIKE", "REMOVE", new Date()));
-        log.debug(String.format("Пользователь с id: %d удалил лайк фильма с id: %d", userId, id));
+        log.debug("Пользователь с id: {} удалил лайк фильма с id: {}", userId, id);
     }
 
     public List<Film> getListPopularFilm(Integer count, Integer genreId, Integer year) {
         validateGenreAndYear(genreId, year);
         List<Film> films;
         if (genreId != null && year != null) {
-            log.info(String.format("Запрошено %d популярных фильмов по жанру №%d и %d году", count, genreId, year));
+            log.info("Запрошено {} популярных фильмов по жанру №{} и {} году", count, genreId, year);
             films = filmStorage.findPopularFilmSortedByGenreAndYear(count, genreId, year);
         } else if (genreId != null) {
-            log.info(String.format("Запрошено %d популярных фильмов по жанру №%d", count, genreId));
+            log.info("Запрошено {} популярных фильмов по жанру №{}", count, genreId);
             films = filmStorage.getListPopularFilmSortedByGenre(count, genreId);
         } else if (year != null) {
-            log.info(String.format("Запрошено %d популярных фильмов по %d году", count, year));
+            log.info("Запрошено {} популярных фильмов по {} году", count, year);
             films = filmStorage.getListPopularFilmSortedByYear(count, year);
         } else {
-            log.info(String.format("Запрошено %d популярных фильмов", count));
+            log.info("Запрошено {} популярных фильмов", count);
             films = filmStorage.getListPopularFilm(count);
         }
         return addFilmsGenres(films);

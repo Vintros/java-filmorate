@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ExistsException;
@@ -19,17 +20,12 @@ import static ru.yandex.practicum.filmorate.validator.Validator.validateUserNotE
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class UserService {
 
     private final UserStorage userStorage;
     private final FilmStorage filmStorage;
     private final FeedStorage feedStorage;
-
-    public UserService(UserStorage userStorage, FilmStorage filmStorage, FeedStorage feedStorage) {
-        this.userStorage = userStorage;
-        this.filmStorage = filmStorage;
-        this.feedStorage = feedStorage;
-    }
 
     public void addFriend(Long id, Long friendId) {
         validateUser(id);

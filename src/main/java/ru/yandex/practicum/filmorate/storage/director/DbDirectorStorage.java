@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.storage.director;
 
-import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -14,7 +13,6 @@ import java.sql.SQLException;
 import java.util.*;
 
 @Repository
-@Primary
 public class DbDirectorStorage implements DirectorStorage {
     private final JdbcTemplate jdbcTemplate;
 

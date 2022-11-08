@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.Director;
@@ -12,12 +13,9 @@ import static ru.yandex.practicum.filmorate.validator.Validator.validateDirector
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class DirectorService {
     private final DirectorStorage directorStorage;
-
-    public DirectorService(DirectorStorage directorStorage) {
-        this.directorStorage = directorStorage;
-    }
 
     public Collection<Director> getDirectors() {
         log.info("Запрошен список всех режиссёров");
