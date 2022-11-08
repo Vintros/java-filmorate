@@ -6,12 +6,15 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ExistsException;
 import ru.yandex.practicum.filmorate.exception.UnknownUserException;
 import ru.yandex.practicum.filmorate.model.Director;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
+import ru.yandex.practicum.filmorate.storage.feed.FeedStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -24,11 +27,14 @@ public class FilmService {
     private final FilmStorage filmStorage;
     private final GenreStorage genreStorage;
     private final DirectorStorage directorStorage;
+    private final FeedStorage feedStorage;
 
-    public FilmService(FilmStorage filmStorage, GenreStorage genreStorage, DirectorStorage directorStorage) {
+    public FilmService(FilmStorage filmStorage, GenreStorage genreStorage, DirectorStorage directorStorage,
+                       FeedStorage feedStorage) {
         this.filmStorage = filmStorage;
         this.genreStorage = genreStorage;
         this.directorStorage = directorStorage;
+        this.feedStorage = feedStorage;
     }
 
     public void addLikeFilm(Long id, Long userId) {
@@ -40,6 +46,7 @@ public class FilmService {
                     userId, id));
         }
         filmStorage.addLikeFilm(id, userId);
+        feedStorage.saveUserEvent(new Event(userId, id, "LIKE", "ADD", new Date()));
         log.debug(String.format("Пользователь с id: %d поставил лайк фильму с id: %d", userId, id));
     }
 
@@ -52,11 +59,12 @@ public class FilmService {
             throw new UnknownUserException(String.format("Пользователь с id: %d не ставил лайк фильму с id: %d",
                     userId, id));
         }
+        feedStorage.saveUserEvent(new Event(userId, id, "LIKE", "REMOVE", new Date()));
         log.debug(String.format("Пользователь с id: %d удалил лайк фильма с id: %d", userId, id));
     }
 
     public List<Film> getListPopularFilm(Integer count, Integer genreId, Integer year) {
-        validateGenreAndYear(genreId,year);
+        validateGenreAndYear(genreId, year);
         List<Film> films;
         if (genreId != null && year != null) {
             log.info(String.format("Запрошено %d популярных фильмов по жанру №%d и %d году", count, genreId, year));
@@ -73,6 +81,7 @@ public class FilmService {
         }
         return addFilmsGenres(films);
     }
+
     private List<Film> addFilmsGenres(List<Film> films) {
         Map<Long, List<Genre>> genresByFilmsId = genreStorage.getGenresByFilmsId();
         for (Film film : films) {
@@ -117,7 +126,7 @@ public class FilmService {
 
     public List<Film> getFilmsByDirector(Long directorId, String sortBy) {
         validateDirector(directorId);
-        return filmStorage.getFilmsByDirector(directorId,sortBy);
+        return filmStorage.getFilmsByDirector(directorId, sortBy);
     }
 
     public List<Film> getCommonFilms(Long userId, Long friendId) {
