@@ -109,4 +109,10 @@ public class Validator {
             throw new RuntimeException("Неправильный запрос");
         }
     }
+
+    public static void validateSearchParameter(String by) {
+        if (!by.equals("title") && !by.equals("director") && !by.equals("title,director") && !by.equals("director,title")) {
+            throw new IncorrectSearchParameterException("Введен некорректный параметр поиска. Доступные значения: title; director, title,director; director,title");
+        }
+    }
 }

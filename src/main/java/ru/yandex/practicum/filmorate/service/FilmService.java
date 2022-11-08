@@ -12,6 +12,7 @@ import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -56,7 +57,7 @@ public class FilmService {
     }
 
     public List<Film> getListPopularFilm(Integer count, Integer genreId, Integer year) {
-        validateGenreAndYear(genreId,year);
+        validateGenreAndYear(genreId, year);
         List<Film> films;
         if (genreId != null && year != null) {
             log.info(String.format("Запрошено %d популярных фильмов по жанру №%d и %d году", count, genreId, year));
@@ -73,6 +74,7 @@ public class FilmService {
         }
         return addFilmsGenres(films);
     }
+
     private List<Film> addFilmsGenres(List<Film> films) {
         Map<Long, List<Genre>> genresByFilmsId = genreStorage.getGenresByFilmsId();
         for (Film film : films) {
@@ -117,7 +119,28 @@ public class FilmService {
 
     public List<Film> getFilmsByDirector(Long directorId, String sortBy) {
         validateDirector(directorId);
-        return filmStorage.getFilmsByDirector(directorId,sortBy);
+        return filmStorage.getFilmsByDirector(directorId, sortBy);
+    }
+
+    public List<Film> searchFilmsByTitleOrDirector(String query, String searchBy) {
+        log.info("Получен поисковый запрос: {}. Параметр поиска: {}", query, searchBy);
+        validateSearchParameter(searchBy);
+        List<Film> films;
+                switch (searchBy) {
+            case "title":
+                films = filmStorage.searchFilmsWithoutGenresAndDirectorsByTitle(query);
+                break;
+            case "director":
+                films = filmStorage.searchFilmsWithoutGenresAndDirectorsByDirector(query);
+                break;
+            case "title,director":
+            case "director,title":
+                films = filmStorage.searchFilmsWithoutGenresAndDirectorsByTitleAndDirector(query);
+                break;
+            default:
+                films = new ArrayList<>();
+        }
+        return populateFilmsWithGenresAndDirectors(films);
     }
 
     public List<Film> getCommonFilms(Long userId, Long friendId) {
