@@ -122,11 +122,11 @@ public class FilmService {
         return filmStorage.getFilmsByDirector(directorId, sortBy);
     }
 
-    public List<Film> searchFilmsByTitleOrDirector(String query, String by) {
-        log.info("Получен поисковый запрос: {}. Парамент поиска: {}", query, by);
-        validateSearchParameter(by);
+    public List<Film> searchFilmsByTitleOrDirector(String query, String searchBy) {
+        log.info("Получен поисковый запрос: {}. Парамент поиска: {}", query, searchBy);
+        validateSearchParameter(searchBy);
         List<Film> films;
-                switch (by) {
+                switch (searchBy) {
             case "title":
                 films = filmStorage.searchFilmsWithoutGenresAndDirectorsByTitle(query);
                 break;

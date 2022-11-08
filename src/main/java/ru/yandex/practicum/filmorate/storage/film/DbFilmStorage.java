@@ -405,7 +405,7 @@ public class DbFilmStorage implements FilmStorage {
             }
         }
         return films.stream()
-                .sorted(Comparator.comparing(Film::getRate))
+                .sorted(Comparator.comparing(Film::getRate).reversed())
                 .collect(Collectors.toList());
     }
 
