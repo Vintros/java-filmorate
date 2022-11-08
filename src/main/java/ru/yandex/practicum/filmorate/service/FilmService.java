@@ -123,7 +123,7 @@ public class FilmService {
     }
 
     public List<Film> searchFilmsByTitleOrDirector(String query, String searchBy) {
-        log.info("Получен поисковый запрос: {}. Парамент поиска: {}", query, searchBy);
+        log.info("Получен поисковый запрос: {}. Параметр поиска: {}", query, searchBy);
         validateSearchParameter(searchBy);
         List<Film> films;
                 switch (searchBy) {
