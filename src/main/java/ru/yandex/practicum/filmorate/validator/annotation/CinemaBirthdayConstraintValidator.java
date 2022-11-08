@@ -12,6 +12,6 @@ import java.time.LocalDate;
 public class CinemaBirthdayConstraintValidator implements ConstraintValidator<AfterCinemaBirthday, Date> {
     @Override
     public boolean isValid(Date date, ConstraintValidatorContext cxt) {
-        return date.toLocalDate().isAfter(LocalDate.of(1895, 12, 28));
+        return date.toLocalDate().isAfter(LocalDate.of(1895, 12, 27));
     }
 }
