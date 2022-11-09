@@ -126,7 +126,7 @@ public class FilmService {
         log.info("Получен поисковый запрос: {}. Параметр поиска: {}", query, searchBy);
         validateSearchParameter(searchBy);
         List<Film> films;
-                switch (searchBy) {
+        switch (searchBy) {
             case "title":
                 films = filmStorage.searchFilmsWithoutGenresAndDirectorsByTitle(query);
                 break;

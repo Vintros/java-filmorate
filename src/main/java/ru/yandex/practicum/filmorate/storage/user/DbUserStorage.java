@@ -22,7 +22,9 @@ public class DbUserStorage implements UserStorage {
 
     @Override
     public User createUser(User user) {
-        String sqlQuery = "insert into users (name, email, login, birthday) values (?, ?, ?, ?)";
+        String sqlQuery = "" +
+                "INSERT INTO users (name, email, login, birthday) " +
+                "VALUES (?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(sqlQuery, new String[]{"user_id"});
@@ -37,8 +39,10 @@ public class DbUserStorage implements UserStorage {
 
     @Override
     public User updateUser(User user) {
-        String sqlQuery = "update users set name = ?, email = ?, login = ?, birthday = ?" +
-                "where user_id = ?";
+        String sqlQuery = "" +
+                "UPDATE users " +
+                "SET name = ?, email = ?, login = ?, birthday = ?" +
+                "WHERE user_id = ?";
         jdbcTemplate.update(sqlQuery,
                 user.getName(),
                 user.getEmail(),
@@ -50,24 +54,41 @@ public class DbUserStorage implements UserStorage {
 
     @Override
     public List<User> getUsers() {
-        String sqlQuery = "select user_id, name, email, login, birthday from users";
+        String sqlQuery = "" +
+                "SELECT user_id, name, email, login, birthday " +
+                "FROM users";
         return jdbcTemplate.query(sqlQuery, this::mapRowToUser);
     }
 
     @Override
     public List<User> getCommonFriends(Long id, Long friendId) {
-        String sqlQuery = "select user_id, name, email, login, birthday from users where user_id in (" +
-                "select friend_user_id from friends where ? = user_id) and user_id in (" +
-                "select friend_user_id from friends where ? = user_id)";
+        String sqlQuery = "" +
+                "SELECT user_id, name, email, login, birthday " +
+                "FROM users " +
+                "WHERE user_id IN " +
+                "   (SELECT friend_user_id " +
+                "    FROM friends " +
+                "    WHERE ? = user_id) AND user_id IN " +
+                "   (SELECT friend_user_id " +
+                "    FROM friends " +
+                "    WHERE ? = user_id)";
         return jdbcTemplate.query(sqlQuery, this::mapRowToUser, id, friendId);
     }
 
     @Override
     public User getUserById(Long id) {
-        String sqlQuery = "select user_id, name, email, login, birthday from users where user_id = ?";
+        String sqlQuery = "" +
+                "SELECT user_id, name, email, login, birthday " +
+                "FROM users " +
+                "WHERE user_id = ?";
         User user = jdbcTemplate.queryForObject(sqlQuery, this::mapRowToUser, id);
-        sqlQuery = "select user_id, name, email, login, birthday from users where user_id in " +
-                "(select friend_user_id from friends where user_id = ?)";
+        sqlQuery = "" +
+                "SELECT user_id, name, email, login, birthday " +
+                "FROM users " +
+                "WHERE user_id IN " +
+                "   (SELECT friend_user_id " +
+                "    FROM friends " +
+                "    WHERE user_id = ?)";
         List<User> friendsId = jdbcTemplate.query(sqlQuery, this::mapRowToUser, id);
         user.getFriends().addAll(friendsId);
         return user;
@@ -75,19 +96,25 @@ public class DbUserStorage implements UserStorage {
 
     @Override
     public void addFriend(Long id, Long friendId) {
-        String sqlQuery = "insert into friends (user_id, friend_user_id) values (?, ?)";
+        String sqlQuery = "" +
+                "INSERT INTO friends (user_id, friend_user_id) " +
+                "VALUES (?, ?)";
         jdbcTemplate.update(sqlQuery, id, friendId);
     }
 
     @Override
     public void removeFriend(Long id, Long friendId) {
-        String sqlQuery = "delete from friends where user_id = ? and friend_user_id = ?";
+        String sqlQuery = "" +
+                "DELETE FROM friends " +
+                "WHERE user_id = ? AND friend_user_id = ?";
         jdbcTemplate.update(sqlQuery, id, friendId);
     }
 
     @Override
     public void removeUserById(Long id) {
-        String sqlQuery = "delete from users where user_id = ?";
+        String sqlQuery = "" +
+                "DELETE FROM users " +
+                "WHERE user_id = ?";
         jdbcTemplate.update(sqlQuery, id);
     }
 

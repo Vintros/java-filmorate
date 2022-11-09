@@ -22,8 +22,9 @@ public class DbReviewStorage implements ReviewStorage {
 
     @Override
     public Review addReview(Review review) {
-        String sqlQuery = "insert into reviews (film_id, user_id, content, is_positive) " +
-                "values (?, ?, ?, ?)";
+        String sqlQuery = "" +
+                "INSERT INTO reviews (film_id, user_id, content, is_positive) " +
+                "VALUES (?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(sqlQuery, new String[]{"review_id"});
@@ -38,27 +39,35 @@ public class DbReviewStorage implements ReviewStorage {
 
     @Override
     public Review getReviewById(Long id) {
-        String sqlQuery = "select r.review_id, r.film_id, r.user_id, r.content, r.is_positive," +
-        "count(rrp.review_id) - count(rrn.review_id) as useful " +
-        "from reviews as r " +
-        "left join (select review_id from reviews_rating where is_positive = true) as rrp " +
-                "on r.review_id = rrp.review_id " +
-        "left join (select review_id from reviews_rating where is_positive = false) as rrn " +
-                "on r.review_id = rrn.review_id " +
-        "where r.review_id = ? " +
-        "group by r.review_id, r.film_id, r.user_id, r.content, r.is_positive;";
+        String sqlQuery = "" +
+                "SELECT r.review_id, r.film_id, r.user_id, r.content, r.is_positive, COUNT(rrp.review_id) - COUNT(rrn.review_id) AS useful " +
+                "FROM reviews AS r " +
+                "LEFT JOIN " +
+                "   (SELECT review_id " +
+                "    FROM reviews_rating " +
+                "    WHERE is_positive = true) AS rrp ON r.review_id = rrp.review_id " +
+                "LEFT JOIN " +
+                "   (SELECT review_id " +
+                "    FROM reviews_rating " +
+                "    WHERE is_positive = false) AS rrn ON r.review_id = rrn.review_id " +
+                "WHERE r.review_id = ? " +
+                "GROUP BY r.review_id, r.film_id, r.user_id, r.content, r.is_positive";
         return jdbcTemplate.queryForObject(sqlQuery, this::mapRowToReview, id);
     }
 
     @Override
     public void deleteReviewById(Long id) {
-        String sqlQuery = "delete from reviews where review_id = ?";
+        String sqlQuery = "" +
+                "DELETE FROM reviews WHERE review_id = ?";
         jdbcTemplate.update(sqlQuery, id);
     }
 
     @Override
     public Review updateReviewById(Review review) {
-        String sqlQuery = "update reviews set content = ?, is_positive = ? where review_id = ?";
+        String sqlQuery = "" +
+                "UPDATE reviews " +
+                "SET content = ?, is_positive = ? " +
+                "WHERE review_id = ?";
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(sqlQuery);
             ps.setString(1, review.getContent());
@@ -71,42 +80,53 @@ public class DbReviewStorage implements ReviewStorage {
 
     @Override
     public List<Review> getReviewsByFilmIdOrAll(Long filmId, Long count) {
-        String sqlQuery = "select r.review_id, r.film_id, r.user_id, r.content, r.is_positive, " +
-                "count(rrp.review_id) - count(rrn.review_id) as useful " +
-        "from reviews as r " +
-        "left join (select review_id from reviews_rating where is_positive = true) as rrp " +
-        "on r.review_id = rrp.review_id " +
-        "left join (select review_id from reviews_rating where is_positive = false) as rrn " +
-        "on r.review_id = rrn.review_id ";
+        String sqlQuery = "" +
+                "SELECT r.review_id, r.film_id, r.user_id, r.content, r.is_positive, COUNT(rrp.review_id) - COUNT(rrn.review_id) AS useful " +
+                "FROM reviews AS r " +
+                "LEFT JOIN " +
+                "   (SELECT review_id " +
+                "    FROM reviews_rating " +
+                "    WHERE is_positive = true) AS rrp ON r.review_id = rrp.review_id " +
+                "LEFT JOIN " +
+                "   (SELECT review_id " +
+                "    FROM reviews_rating " +
+                "    WHERE is_positive = false) AS rrn ON r.review_id = rrn.review_id ";
         if (filmId != null && filmId > 0) {
-            sqlQuery = sqlQuery + " where film_id = " + filmId;
+            sqlQuery = sqlQuery + " WHERE film_id = " + filmId;
         }
-        sqlQuery = sqlQuery + "group by r.review_id, r.film_id, r.user_id, r.content, r.is_positive " +
-        "order by useful desc " +
-        "limit ?";
+        sqlQuery = sqlQuery + "" +
+                "GROUP BY r.review_id, r.film_id, r.user_id, r.content, r.is_positive " +
+                "ORDER BY useful DESC " +
+                "LIMIT ?";
         return jdbcTemplate.query(sqlQuery, this::mapRowToReview, count);
     }
 
     @Override
     public void addLikeToReview(Long id, Long userId) {
-        String sqlQuery = "insert into reviews_rating (review_id, user_id, is_positive) values (?, ?, true)";
+        String sqlQuery = "" +
+                "INSERT INTO reviews_rating (review_id, user_id, is_positive) " +
+                "VALUES (?, ?, true)";
         jdbcTemplate.update(sqlQuery, id, userId);
     }
 
     @Override
     public void addDislikeToReview(Long id, Long userId) {
-        String sqlQuery = "insert into reviews_rating (review_id, user_id, is_positive) values (?, ?, false)";
+        String sqlQuery = "" +
+                "INSERT INTO reviews_rating (review_id, user_id, is_positive) " +
+                "VALUES (?, ?, false)";
         jdbcTemplate.update(sqlQuery, id, userId);
     }
 
     @Override
     public void deleteLikeOrDislikeToReview(Long id, Long userId) {
-        String sqlQuery = "delete from reviews_rating where review_id = ? and user_id = ?";
+        String sqlQuery = "" +
+                "DELETE FROM reviews_rating " +
+                "WHERE review_id = ? AND user_id = ?";
         jdbcTemplate.update(sqlQuery, id, userId);
     }
 
     private Review mapRowToReview(ResultSet rs, int rowNum) throws SQLException {
-        Review review = new Review(
+        return new Review(
                 rs.getLong("review_id"),
                 rs.getLong("user_id"),
                 rs.getLong("film_id"),
@@ -114,6 +134,5 @@ public class DbReviewStorage implements ReviewStorage {
                 rs.getBoolean("is_positive"),
                 rs.getLong("useful")
         );
-        return review;
     }
 }
