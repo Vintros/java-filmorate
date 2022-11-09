@@ -108,7 +108,11 @@ public class DbUserStorage implements UserStorage {
         if (user.getId() == null) {
             return;
         }
-        String sqlQuery = "SELECT EXISTS(SELECT user_id FROM users WHERE user_id = ?)";
+        String sqlQuery = "" +
+                "SELECT EXISTS " +
+                "  (SELECT user_id " +
+                "   FROM users " +
+                "   WHERE user_id = ?)";
         jdbcTemplate.query(sqlQuery, (rs) -> {
             if (rs.getLong(1) == user.getId()) throw new ExistsException("Пользователь уже зарегистрирован");
         }, user.getId());
