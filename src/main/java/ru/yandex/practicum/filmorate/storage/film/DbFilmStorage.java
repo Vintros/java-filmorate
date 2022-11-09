@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -151,9 +152,10 @@ public class DbFilmStorage implements FilmStorage {
 
     private void addDirectors(Set<Director> directors, Long id) {
         String sqlQuery = "insert into directors (director_id, film_id) values (?, ?)";
-        for (Director director : directors) {
-            jdbcTemplate.update(sqlQuery, director.getId(), id);
-        }
+        jdbcTemplate.batchUpdate(sqlQuery, directors, 100, (ps, director) -> {
+            ps.setLong(1, director.getId());
+            ps.setLong(2, id);
+        });
     }
 
     @Override
