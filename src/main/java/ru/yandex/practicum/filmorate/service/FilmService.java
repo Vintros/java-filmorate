@@ -14,6 +14,7 @@ import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 import ru.yandex.practicum.filmorate.storage.feed.FeedStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -31,10 +32,11 @@ public class FilmService {
     private final GenreStorage genreStorage;
     private final DirectorStorage directorStorage;
     private final FeedStorage feedStorage;
+    private final UserStorage userStorage;
 
     public void addLikeFilm(Long id, Long userId) {
-        validateFilm(id);
-        validateUser(userId);
+        filmStorage.validateFilm(id);
+        userStorage.validateUser(userId);
         Film film = filmStorage.getFilmById(id);
         if (film.getUsersIdLiked().contains(userId)) {
             throw new ExistsException(String.format("Пользователь с id: %d уже поставил лайк фильму с id: %d",
@@ -46,8 +48,8 @@ public class FilmService {
     }
 
     public void removeLikeFilm(Long id, Long userId) {
-        validateFilm(id);
-        validateUser(userId);
+        filmStorage.validateFilm(id);
+        userStorage.validateUser(userId);
         try {
             filmStorage.removeLikeFilm(id, userId);
         } catch (DataAccessException e) {
@@ -88,13 +90,13 @@ public class FilmService {
     }
 
     public Film addFilm(Film film) {
-        validateFilmNotExist(film);
+        filmStorage.checkFilmNotExist(film);
         log.info("Фильм {} добавлен в коллекцию", film.getName());
         return filmStorage.addFilm(film);
     }
 
     public Film updateFilm(Film film) {
-        validateFilm(film.getId());
+        filmStorage.validateFilm(film.getId());
         log.info("Фильм {} обновлен", film.getName());
         return filmStorage.updateFilm(film);
     }
@@ -106,19 +108,19 @@ public class FilmService {
     }
 
     public Film getFilmById(Long id) {
-        validateFilm(id);
+        filmStorage.validateFilm(id);
         log.info("Фильм с id: {}, запрошен", id);
         return filmStorage.getFilmById(id);
     }
 
     public void removeFilmById(Long id) {
-        validateFilm(id);
+        filmStorage.validateFilm(id);
         log.info("Фильм с id: {}, удалён из коллекции", id);
         filmStorage.removeFilmById(id);
     }
 
     public List<Film> getFilmsByDirector(Long directorId, String sortBy) {
-        validateDirector(directorId);
+        directorStorage.validateDirector(directorId);
         return filmStorage.getFilmsByDirector(directorId, sortBy);
     }
 
@@ -126,7 +128,7 @@ public class FilmService {
         log.info("Получен поисковый запрос: {}. Параметр поиска: {}", query, searchBy);
         validateSearchParameter(searchBy);
         List<Film> films;
-                switch (searchBy) {
+        switch (searchBy) {
             case "title":
                 films = filmStorage.searchFilmsWithoutGenresAndDirectorsByTitle(query);
                 break;
@@ -144,8 +146,8 @@ public class FilmService {
     }
 
     public List<Film> getCommonFilms(Long userId, Long friendId) {
-        validateUser(userId);
-        validateUser(friendId);
+        userStorage.validateUser(userId);
+        userStorage.validateUser(friendId);
         log.info("Запрошен список общих фильмов пользлователей с id: {} и {}", userId, friendId);
         List<Film> films = filmStorage.getCommonFilms(userId, friendId);
         return populateFilmsWithGenresAndDirectors(films);

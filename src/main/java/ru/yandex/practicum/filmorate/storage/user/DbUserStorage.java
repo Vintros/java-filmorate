@@ -1,9 +1,12 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.exception.ExistsException;
+import ru.yandex.practicum.filmorate.exception.UnknownUserException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.sql.PreparedStatement;
@@ -89,6 +92,26 @@ public class DbUserStorage implements UserStorage {
     public void removeUserById(Long id) {
         String sqlQuery = "delete from users where user_id = ?";
         jdbcTemplate.update(sqlQuery, id);
+    }
+
+    @Override
+    public void validateUser(Long id) {
+        try {
+            getUserById(id);
+        } catch (DataAccessException e) {
+            throw new UnknownUserException(String.format("Пользователь с id: %d не найден", id));
+        }
+    }
+
+    @Override
+    public void checkUserNotExist(User user) {
+        if (user.getId() == null) {
+            return;
+        }
+        String sqlQuery = "SELECT EXISTS(SELECT user_id FROM users WHERE user_id = ?)";
+        jdbcTemplate.query(sqlQuery, (rs) -> {
+            if (rs.getLong(1) == user.getId()) throw new ExistsException("Пользователь уже зарегистрирован");
+        }, user.getId());
     }
 
     private User mapRowToUser(ResultSet rs, int rowNum) throws SQLException {

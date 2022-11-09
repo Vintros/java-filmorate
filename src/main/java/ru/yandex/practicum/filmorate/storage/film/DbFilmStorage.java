@@ -1,9 +1,12 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.exception.ExistsException;
+import ru.yandex.practicum.filmorate.exception.UnknownFilmException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -307,7 +310,6 @@ public class DbFilmStorage implements FilmStorage {
     }
 
 
-
     @Override
     public List<Film> searchFilmsWithoutGenresAndDirectorsByTitle(String query) {
         // Получаем список данных ID фильма + Название фильма
@@ -346,6 +348,26 @@ public class DbFilmStorage implements FilmStorage {
         Long filmId = rs.getLong("film_id");
         String name = rs.getString("director_name");
         return new AbstractMap.SimpleEntry<>(filmId, name);
+    }
+
+    @Override
+    public void validateFilm(Long id) {
+        try {
+            getFilmById(id);
+        } catch (DataAccessException e) {
+            throw new UnknownFilmException(String.format("Фильм с id: %d не найден", id));
+        }
+    }
+
+    @Override
+    public void checkFilmNotExist(Film film) {
+        if (film.getId() == null) {
+            return;
+        }
+        String sqlQuery = "SELECT EXISTS(SELECT film_id FROM films WHERE film_id = ?)";
+        jdbcTemplate.query(sqlQuery, (rs) -> {
+            if (rs.getLong(1) == film.getId()) throw new ExistsException("Фильм уже зарегистрирован");
+        }, film.getId());
     }
 
     @Override
@@ -411,4 +433,5 @@ public class DbFilmStorage implements FilmStorage {
         return likesByFilmId;
     }
 }
+
 

@@ -20,4 +20,6 @@ public interface ReviewStorage {
     void addDislikeToReview(Long id, Long userId);
 
     void deleteLikeOrDislikeToReview(Long id, Long userId);
+
+    void validateReview(Long id);
 }

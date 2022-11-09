@@ -15,9 +15,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import static ru.yandex.practicum.filmorate.validator.Validator.validateUser;
-import static ru.yandex.practicum.filmorate.validator.Validator.validateUserNotExist;
-
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -28,8 +25,8 @@ public class UserService {
     private final FeedStorage feedStorage;
 
     public void addFriend(Long id, Long friendId) {
-        validateUser(id);
-        validateUser(friendId);
+        userStorage.validateUser(id);
+        userStorage.validateUser(friendId);
         User firstUser = userStorage.getUserById(id);
         User secondUser = userStorage.getUserById(friendId);
         if (firstUser.getFriends().contains(secondUser)) {
@@ -41,8 +38,8 @@ public class UserService {
     }
 
     public void deleteFriend(Long id, Long friendId) {
-        validateUser(id);
-        validateUser(friendId);
+        userStorage.validateUser(id);
+        userStorage.validateUser(friendId);
         User firstUser = userStorage.getUserById(id);
         User secondUser = userStorage.getUserById(friendId);
         if (!firstUser.getFriends().contains(secondUser)) {
@@ -54,28 +51,28 @@ public class UserService {
     }
 
     public List<User> getFriends(Long id) {
-        validateUser(id);
+        userStorage.validateUser(id);
         User user = userStorage.getUserById(id);
         log.info(String.format("Пользователь с id: %d запросил список друзей", id));
         return new ArrayList<>(user.getFriends());
     }
 
     public List<User> getCommonFriends(Long id, Long secondId) {
-        validateUser(id);
-        validateUser(secondId);
+        userStorage.validateUser(id);
+        userStorage.validateUser(secondId);
         log.info(String.format("Пользователь с id: %d запросил список общих друзей с id: %d", id, secondId));
         return userStorage.getCommonFriends(id, secondId);
     }
 
     public User createUser(User user) {
-        validateUserNotExist(user);
+        userStorage.checkUserNotExist(user);
         checkPresenceUserName(user);
         log.info("Добавлен пользователь " + user);
         return userStorage.createUser(user);
     }
 
     public User updateUser(User user) {
-        validateUser(user.getId());
+        userStorage.validateUser(user.getId());
         checkPresenceUserName(user);
         log.info("Обновлен пользователь " + user);
         return userStorage.updateUser(user);
@@ -87,19 +84,19 @@ public class UserService {
     }
 
     public User getUserById(Long id) {
-        validateUser(id);
+        userStorage.validateUser(id);
         log.info("Запрошен пользователь с id: {}", id);
         return userStorage.getUserById(id);
     }
 
     public void removeUserById(Long id) {
-        validateUser(id);
+        userStorage.validateUser(id);
         log.info("удалён пользователь с id: {}", id);
         userStorage.removeUserById(id);
     }
 
     public List<Film> getRecommendations(Long id) {
-        validateUser(id);
+        userStorage.validateUser(id);
         log.info("Пользователем с id - {} запрошен список рекомендованных фильмов", id);
         return filmStorage.getRecommendations(id);
     }
@@ -112,7 +109,7 @@ public class UserService {
     }
 
     public List<Event> getFeed(Long id) {
-        validateUser(id);
+        userStorage.validateUser(id);
         return feedStorage.getFeed(id);
     }
 }

@@ -22,4 +22,7 @@ public interface UserStorage {
 
     void removeUserById(Long id);
 
+    void validateUser(Long id);
+
+    void checkUserNotExist(User user);
 }

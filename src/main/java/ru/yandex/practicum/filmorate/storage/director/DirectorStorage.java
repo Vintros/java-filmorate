@@ -52,4 +52,8 @@ public interface DirectorStorage {
     Map<Long, List<Director>> getDirectorsByFilmsId();
 
     List<Director> getDirectorsByFilmId(Long id);
+
+    void validateDirector(Long directorId);
+
+    void checkDirectorNotExist(Director director);
 }

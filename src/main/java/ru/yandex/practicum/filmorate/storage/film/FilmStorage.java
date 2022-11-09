@@ -39,4 +39,8 @@ public interface FilmStorage {
     List<Film> searchFilmsWithoutGenresAndDirectorsByDirector(String query);
 
     List<Film> searchFilmsWithoutGenresAndDirectorsByTitleAndDirector(String query);
+
+    void validateFilm(Long id);
+
+    void checkFilmNotExist(Film film);
 }

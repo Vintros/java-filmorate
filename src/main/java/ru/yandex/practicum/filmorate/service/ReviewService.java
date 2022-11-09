@@ -6,12 +6,12 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.storage.feed.FeedStorage;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.review.ReviewStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.Date;
 import java.util.List;
-
-import static ru.yandex.practicum.filmorate.validator.Validator.*;
 
 @Service
 @Slf4j
@@ -20,10 +20,12 @@ public class ReviewService {
 
     private final ReviewStorage reviewStorage;
     private final FeedStorage feedStorage;
+    private final FilmStorage filmStorage;
+    private final UserStorage userStorage;
 
     public Review addReview(Review review) {
-        validateFilm(review.getFilmId());
-        validateUser(review.getUserId());
+        filmStorage.validateFilm(review.getFilmId());
+        userStorage.validateUser(review.getUserId());
         Review createdReview = reviewStorage.addReview(review);
         feedStorage.saveUserEvent(new Event(createdReview.getUserId(), createdReview.getReviewId(), "REVIEW", "ADD",
                 new Date()));
@@ -32,7 +34,7 @@ public class ReviewService {
     }
 
     public Review getReviewById(Long id) {
-        validateReview(id);
+        reviewStorage.validateReview(id);
         log.info("запрошен отзыв с id: {}", id);
         return reviewStorage.getReviewById(id);
     }
@@ -59,22 +61,22 @@ public class ReviewService {
     }
 
     public void addLikeToReview(Long id, Long userId) {
-        validateReview(id);
-        validateUser(userId);
+        reviewStorage.validateReview(id);
+        userStorage.validateUser(userId);
         reviewStorage.addLikeToReview(id, userId);
         log.info("пользователь с id: {} поставил лайк отзыву с id: {}", userId, id);
     }
 
     public void addDislikeToReview(Long id, Long userId) {
-        validateReview(id);
-        validateUser(userId);
+        reviewStorage.validateReview(id);
+        userStorage.validateUser(userId);
         reviewStorage.addDislikeToReview(id, userId);
         log.info("пользователь с id: {} поставил дизлайк отзыву с id: {}", userId, id);
     }
 
     public void deleteLikeOrDislikeToReview(Long id, Long userId) {
-        validateReview(id);
-        validateUser(userId);
+        reviewStorage.validateReview(id);
+        userStorage.validateUser(userId);
         reviewStorage.deleteLikeOrDislikeToReview(id, userId);
         log.info("пользователь с id: {} поставил оценку отзыва с id: {}", userId, id);
     }

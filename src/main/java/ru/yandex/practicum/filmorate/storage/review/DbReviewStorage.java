@@ -1,9 +1,11 @@
 package ru.yandex.practicum.filmorate.storage.review;
 
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.exception.UnknownReviewException;
 import ru.yandex.practicum.filmorate.model.Review;
 
 import java.sql.PreparedStatement;
@@ -39,14 +41,14 @@ public class DbReviewStorage implements ReviewStorage {
     @Override
     public Review getReviewById(Long id) {
         String sqlQuery = "select r.review_id, r.film_id, r.user_id, r.content, r.is_positive," +
-        "count(rrp.review_id) - count(rrn.review_id) as useful " +
-        "from reviews as r " +
-        "left join (select review_id from reviews_rating where is_positive = true) as rrp " +
+                "count(rrp.review_id) - count(rrn.review_id) as useful " +
+                "from reviews as r " +
+                "left join (select review_id from reviews_rating where is_positive = true) as rrp " +
                 "on r.review_id = rrp.review_id " +
-        "left join (select review_id from reviews_rating where is_positive = false) as rrn " +
+                "left join (select review_id from reviews_rating where is_positive = false) as rrn " +
                 "on r.review_id = rrn.review_id " +
-        "where r.review_id = ? " +
-        "group by r.review_id, r.film_id, r.user_id, r.content, r.is_positive;";
+                "where r.review_id = ? " +
+                "group by r.review_id, r.film_id, r.user_id, r.content, r.is_positive;";
         return jdbcTemplate.queryForObject(sqlQuery, this::mapRowToReview, id);
     }
 
@@ -73,17 +75,17 @@ public class DbReviewStorage implements ReviewStorage {
     public List<Review> getReviewsByFilmIdOrAll(Long filmId, Long count) {
         String sqlQuery = "select r.review_id, r.film_id, r.user_id, r.content, r.is_positive, " +
                 "count(rrp.review_id) - count(rrn.review_id) as useful " +
-        "from reviews as r " +
-        "left join (select review_id from reviews_rating where is_positive = true) as rrp " +
-        "on r.review_id = rrp.review_id " +
-        "left join (select review_id from reviews_rating where is_positive = false) as rrn " +
-        "on r.review_id = rrn.review_id ";
+                "from reviews as r " +
+                "left join (select review_id from reviews_rating where is_positive = true) as rrp " +
+                "on r.review_id = rrp.review_id " +
+                "left join (select review_id from reviews_rating where is_positive = false) as rrn " +
+                "on r.review_id = rrn.review_id ";
         if (filmId != null && filmId > 0) {
             sqlQuery = sqlQuery + " where film_id = " + filmId;
         }
         sqlQuery = sqlQuery + "group by r.review_id, r.film_id, r.user_id, r.content, r.is_positive " +
-        "order by useful desc " +
-        "limit ?";
+                "order by useful desc " +
+                "limit ?";
         return jdbcTemplate.query(sqlQuery, this::mapRowToReview, count);
     }
 
@@ -103,6 +105,15 @@ public class DbReviewStorage implements ReviewStorage {
     public void deleteLikeOrDislikeToReview(Long id, Long userId) {
         String sqlQuery = "delete from reviews_rating where review_id = ? and user_id = ?";
         jdbcTemplate.update(sqlQuery, id, userId);
+    }
+
+    @Override
+    public void validateReview(Long id) {
+        try {
+            getReviewById(id);
+        } catch (DataAccessException e) {
+            throw new UnknownReviewException(String.format("Отзыв с id: %d не найден", id));
+        }
     }
 
     private Review mapRowToReview(ResultSet rs, int rowNum) throws SQLException {
