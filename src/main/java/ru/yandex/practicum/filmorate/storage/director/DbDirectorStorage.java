@@ -87,7 +87,11 @@ public class DbDirectorStorage implements DirectorStorage {
         if (director.getId() == null) {
             return;
         }
-        String sqlQuery = "SELECT EXISTS(SELECT director_id FROM director WHERE director_id = ?)";
+        String sqlQuery = "" +
+                "SELECT EXISTS " +
+                "  (SELECT director_id " +
+                "   FROM director " +
+                "   WHERE director_id = ?)";
         jdbcTemplate.query(sqlQuery, (rs) -> {
             if (rs.getLong(1) == director.getId()) throw new ExistsException("Режиссёр уже зарегистрирован");
         }, director.getId());
