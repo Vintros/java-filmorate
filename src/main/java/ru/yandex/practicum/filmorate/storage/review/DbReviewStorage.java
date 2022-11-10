@@ -58,7 +58,8 @@ public class DbReviewStorage implements ReviewStorage {
     @Override
     public void deleteReviewById(Long id) {
         String sqlQuery = "" +
-                "DELETE FROM reviews WHERE review_id = ?";
+                "DELETE FROM reviews " +
+                "WHERE review_id = ?";
         jdbcTemplate.update(sqlQuery, id);
     }
 
