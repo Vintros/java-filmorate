@@ -104,15 +104,15 @@ public class UserService {
         return filmStorage.getRecommendations(id);
     }
 
+    public List<Event> getFeed(Long id) {
+        validateUser(id);
+        return feedStorage.getFeed(id);
+    }
+
     private void checkPresenceUserName(User user) {
         if (user.getName() == null || user.getName().isEmpty() || user.getName().isBlank()) {
             log.debug("Имя пользователя {} пустое, в качестве имени пользователя присвоен логин", user);
             user.setName(user.getLogin());
         }
-    }
-
-    public List<Event> getFeed(Long id) {
-        validateUser(id);
-        return feedStorage.getFeed(id);
     }
 }
