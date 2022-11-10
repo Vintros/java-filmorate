@@ -20,8 +20,9 @@ public class DbFeedStorage implements FeedStorage {
 
     @Override
     public void saveUserEvent(Event event) {
-        String sqlQuery = "insert into users_feed (user_id, entity_id, event_type, operation, event_time) " +
-                "values (?, ?, ?, ?, ?)";
+        String sqlQuery = "" +
+                "INSERT INTO users_feed (user_id, entity_id, event_type, operation, event_time) " +
+                "VALUES (?, ?, ?, ?, ?)";
         jdbcTemplate.update(sqlQuery,
                 event.getUserId(),
                 event.getEntityId(),
@@ -32,8 +33,11 @@ public class DbFeedStorage implements FeedStorage {
 
     @Override
     public List<Event> getFeed(Long id) {
-        String sqlQuery = "select event_id, user_id, entity_id, event_type, operation, event_time from users_feed " +
-                "where user_id = ? order by event_time";
+        String sqlQuery = "" +
+                "SELECT event_id, user_id, entity_id, event_type, operation, event_time " +
+                "FROM users_feed " +
+                "WHERE user_id = ? " +
+                "ORDER BY event_time";
         return jdbcTemplate.query(sqlQuery, this::mapRowToEvent, id);
     }
 
