@@ -8,10 +8,10 @@ import java.util.Map;
 
 public interface DirectorStorage {
     /**
-     * Метод возвращает из хранилища всех
+     * Метод возвращает список всех
      * режиссёров.
      *
-     * @return Коллекция из всех режиссёров
+     * @return Список всех режиссёров
      * в хранилище
      */
     Collection<Director> getDirectors();
@@ -49,7 +49,24 @@ public interface DirectorStorage {
      */
     void removeDirectorById(Long id);
 
+    /**
+     * Метод возвращает Map, где ключ -
+     * идентификатор фильма, а значение -
+     * список режиссёров, принадлежащих этому
+     * ключу.
+     *
+     * @return Map идентификаторов фильма и
+     * режиссёров им принадлежащих.
+     */
     Map<Long, List<Director>> getDirectorsByFilmsId();
 
+    /**
+     * Метод возвращает список режиссёров,
+     * принадлежащих фильму.
+     *
+     * @param id идентификатор фильма.
+     * @return Список режиссёров, принадлежащих
+     * идентификатору фильма.
+     */
     List<Director> getDirectorsByFilmId(Long id);
 }
