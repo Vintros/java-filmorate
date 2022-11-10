@@ -146,7 +146,7 @@ public class FilmService {
     public List<Film> getCommonFilms(Long userId, Long friendId) {
         validateUser(userId);
         validateUser(friendId);
-        log.info("Запрошен список общих фильмов пользлователей с id: {} и {}", userId, friendId);
+        log.info("Запрошен список общих фильмов пользователей с id: {} и {}", userId, friendId);
         List<Film> films = filmStorage.getCommonFilms(userId, friendId);
         return populateFilmsWithGenresAndDirectors(films);
     }
