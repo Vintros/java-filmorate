@@ -2,7 +2,6 @@ package ru.yandex.practicum.filmorate.storage.director;
 
 import ru.yandex.practicum.filmorate.model.Director;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -14,7 +13,7 @@ public interface DirectorStorage {
      * @return Список всех режиссёров
      * в хранилище
      */
-    Collection<Director> getDirectors();
+    List<Director> getDirectors();
 
     /**
      * Метод возвращает режиссёра по его

@@ -21,7 +21,7 @@ public class DbDirectorStorage implements DirectorStorage {
     }
 
     @Override
-    public Collection<Director> getDirectors() {
+    public List<Director> getDirectors() {
         String sqlQuery = "select director_id, name from director";
         return jdbcTemplate.query(sqlQuery, new DirectorMapper());
     }
