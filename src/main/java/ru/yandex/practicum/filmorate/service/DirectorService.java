@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 
-import java.util.Collection;
+import java.util.List;
 
 import static ru.yandex.practicum.filmorate.validator.Validator.validateDirector;
 import static ru.yandex.practicum.filmorate.validator.Validator.validateDirectorNotExist;
@@ -17,7 +17,7 @@ import static ru.yandex.practicum.filmorate.validator.Validator.validateDirector
 public class DirectorService {
     private final DirectorStorage directorStorage;
 
-    public Collection<Director> getDirectors() {
+    public List<Director> getDirectors() {
         log.info("Запрошен список всех режиссёров");
         return directorStorage.getDirectors();
     }
