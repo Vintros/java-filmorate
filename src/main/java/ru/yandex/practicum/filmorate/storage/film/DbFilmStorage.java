@@ -268,11 +268,7 @@ public class DbFilmStorage implements FilmStorage {
                 .stream()
                 .max(Map.Entry.comparingByValue());
 
-        Long mostIntersectionsUserId = null;
-        if (mostIntersectionsUser.isPresent()) {
-            mostIntersectionsUserId = mostIntersectionsUser.get().getKey();
-        }
-        return mostIntersectionsUserId;
+        return mostIntersectionsUser.map(Map.Entry::getKey).orElse(null);
     }
 
     public List<Film> getListPopularFilm(long count) {
