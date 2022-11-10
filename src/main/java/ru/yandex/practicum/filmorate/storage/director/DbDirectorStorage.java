@@ -21,7 +21,7 @@ public class DbDirectorStorage implements DirectorStorage {
     }
 
     @Override
-    public Collection<Director> getDirectors() {
+    public List<Director> getDirectors() {
         String sqlQuery = "" +
                 "SELECT director_id, name " +
                 "FROM director";
@@ -44,7 +44,7 @@ public class DbDirectorStorage implements DirectorStorage {
                 "VALUES (?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(sqlQuery, new String[]{"director_id"});
+            PreparedStatement ps = connection.prepareStatement(sqlQuery, new String[] {"director_id"});
             ps.setString(1, director.getName());
             return ps;
         }, keyHolder);
