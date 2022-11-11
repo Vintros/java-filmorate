@@ -323,8 +323,8 @@ public class DbFilmStorage implements FilmStorage {
     }
 
     private Map.Entry<Long, Long> mapRowToMapEntry(ResultSet rs, int rowNum) throws SQLException {
-        Long filmId = rs.getLong("film_id");
         Long userId = rs.getLong("user_id");
+        Long filmId = rs.getLong("film_id");
         return new AbstractMap.SimpleEntry<>(userId, filmId);
     }
 
