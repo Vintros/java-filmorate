@@ -317,7 +317,7 @@ public class DbFilmStorage implements FilmStorage {
         try {
             getFilmById(id);
         } catch (DataAccessException e) {
-            throw new UnknownFilmException(String.format("Фильм с id: %d не найден", id));
+            throw new UnknownFilmException(String.format("Film with id: %d is not found", id));
         }
     }
 
@@ -329,7 +329,7 @@ public class DbFilmStorage implements FilmStorage {
                 "   FROM films " +
                 "   WHERE film_id = ?)";
         jdbcTemplate.query(sqlQuery, (rs) -> {
-            if (rs.getBoolean(1)) throw new ExistsException("Фильм уже зарегистрирован");
+            if (rs.getBoolean(1)) throw new ExistsException("The film already exists");
         }, id);
     }
 

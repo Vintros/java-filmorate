@@ -18,13 +18,13 @@ public class GenreService {
     private final GenreStorage genreStorage;
 
     public List<Genre> getAllGenres() {
-        log.info("Запрошены все жанры");
+        log.info("All genres are requested");
         return genreStorage.getAllGenres();
     }
 
     public Genre getGenreById(Long id) {
         validateGenreId(id);
-        log.info("Запрошен жанр с id: {}", id);
+        log.info("The genre with id: {} is requested", id);
         return genreStorage.getGenreById(id);
     }
 }
