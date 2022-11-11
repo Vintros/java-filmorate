@@ -17,7 +17,6 @@ public class MpaService {
 
     private final MpaStorage mpaStorage;
 
-
     public List<Mpa> getAllMpa() {
         log.info("Запрошены все рейтинги");
         return mpaStorage.getAllMpa();

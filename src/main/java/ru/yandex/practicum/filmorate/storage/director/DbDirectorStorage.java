@@ -24,20 +24,27 @@ public class DbDirectorStorage implements DirectorStorage {
     }
 
     @Override
-    public Collection<Director> getDirectors() {
-        String sqlQuery = "select director_id, name from director";
+    public List<Director> getDirectors() {
+        String sqlQuery = "" +
+                "SELECT director_id, name " +
+                "FROM director";
         return jdbcTemplate.query(sqlQuery, new DirectorMapper());
     }
 
     @Override
     public Director getDirectorById(Long id) {
-        String sqlQuery = "select director_id, name from director where director_id = ?";
+        String sqlQuery = "" +
+                "SELECT director_id, name " +
+                "FROM director " +
+                "WHERE director_id = ?";
         return jdbcTemplate.queryForObject(sqlQuery, new DirectorMapper(), id);
     }
 
     @Override
     public Director addDirector(Director director) {
-        String sqlQuery = "insert into director (name) values (?)";
+        String sqlQuery = "" +
+                "INSERT INTO director (name) " +
+                "VALUES (?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(sqlQuery, new String[]{"director_id"});
@@ -49,27 +56,41 @@ public class DbDirectorStorage implements DirectorStorage {
 
     @Override
     public Director updateDirector(Director director) {
-        String sqlQuery = "update director set name = ? where director_id = ?";
+        String sqlQuery = "" +
+                "UPDATE director " +
+                "SET name = ? " +
+                "WHERE director_id = ?";
         jdbcTemplate.update(sqlQuery, director.getName(), director.getId());
         return getDirectorById(director.getId());
     }
 
     @Override
     public void removeDirectorById(Long id) {
-        String sqlQuery = "delete from director where director_id = ?";
+        String sqlQuery = "" +
+                "DELETE FROM director " +
+                "WHERE director_id = ?";
         jdbcTemplate.update(sqlQuery, id);
     }
 
     @Override
     public Map<Long, List<Director>> getDirectorsByFilmsId() {
-        String sqlQuery = "select directors.film_id, director.director_id, director.name from directors join director "
-                + "on directors.director_id = director.director_id order by directors.film_id";
+        String sqlQuery = "" +
+                "SELECT directors.film_id, director.director_id, director.name " +
+                "FROM directors " +
+                "JOIN director ON directors.director_id = director.director_id " +
+                "ORDER BY directors.film_id";
         return jdbcTemplate.query(sqlQuery, this::extractDirectorsByFilmId);
     }
 
     @Override
     public List<Director> getDirectorsByFilmId(Long id) {
-        String sqlQuery = "select * from director where director_id in (select director_id from directors where film_id = ?)";
+        String sqlQuery = "" +
+                "SELECT * " +
+                "FROM director " +
+                "WHERE director_id IN " +
+                "   (SELECT director_id " +
+                "    FROM directors " +
+                "    WHERE film_id = ?)";
         return jdbcTemplate.query(sqlQuery, new DirectorMapper(), id);
     }
 

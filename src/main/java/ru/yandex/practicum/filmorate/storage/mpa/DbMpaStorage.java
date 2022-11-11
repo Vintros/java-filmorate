@@ -18,13 +18,18 @@ public class DbMpaStorage implements MpaStorage{
     }
     @Override
     public List<Mpa> getAllMpa() {
-        String sqlQuery = "select * from mpa";
+        String sqlQuery = "" +
+                "SELECT * "  +
+                "FROM mpa";
         return jdbcTemplate.query(sqlQuery, this::mapRowToMpa);
     }
 
     @Override
     public Mpa getMpaById(Long id) {
-        String sqlQuery = "select * from mpa where mpa_id = ?";
+        String sqlQuery = "" +
+                "SELECT * " +
+                "FROM mpa " +
+                "WHERE mpa_id = ?";
         return jdbcTemplate.queryForObject(sqlQuery, this::mapRowToMpa, id);
     }
 
