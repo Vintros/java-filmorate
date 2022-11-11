@@ -11,7 +11,9 @@ import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 
-import java.sql.*;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -155,35 +157,6 @@ public class DbFilmStorage implements FilmStorage {
         return films;
     }
 
-    private Film getFilmByIdWithoutGenres(Long id) {
-        String sqlQuery = "" +
-                "SELECT film_id, films.name, description, release_date, duration, films.mpa_id, mpa.name " +
-                "FROM films " +
-                "JOIN mpa ON films.mpa_id = mpa.mpa_id " +
-                "WHERE film_id = ?";
-        return jdbcTemplate.queryForObject(sqlQuery, this::mapRowToFilm, id);
-    }
-
-    private void addGenres(Set<Genre> genres, Long id) {
-        String sqlQuery = "" +
-                "INSERT INTO genres (film_id, genre_id) " +
-                "VALUES (?, ?)";
-        jdbcTemplate.batchUpdate(sqlQuery, genres, 100, (ps, genre) -> {
-            ps.setLong(1, id);
-            ps.setLong(2, genre.getId());
-        });
-    }
-
-    private void addDirectors(Set<Director> directors, Long id) {
-        String sqlQuery = "" +
-                "INSERT INTO directors (director_id, film_id) " +
-                "VALUES (?, ?)";
-        jdbcTemplate.batchUpdate(sqlQuery, directors, 100, (ps, director) -> {
-            ps.setLong(1, director.getId());
-            ps.setLong(2, id);
-        });
-    }
-
     @Override
     public List<Film> getRecommendations(Long id) {
         final String sqlQuery = "" +
@@ -213,62 +186,6 @@ public class DbFilmStorage implements FilmStorage {
         }
 
         return result;
-    }
-
-    private Film mapRowToFilm(ResultSet rs, int rowNum) throws SQLException {
-        return new Film(
-                rs.getLong("film_id"),
-                rs.getString("name"),
-                rs.getString("description"),
-                rs.getDate("release_date"),
-                rs.getLong("duration"),
-                new Mpa(
-                        rs.getLong("films.mpa_id"),
-                        rs.getString("mpa.name"))
-        );
-    }
-
-    private Map.Entry<Long, Long> mapRowToMapEntry(ResultSet rs, int rowNum) throws SQLException {
-        Long userId = rs.getLong("user_id");
-        Long filmId = rs.getLong("film_id");
-        return new AbstractMap.SimpleEntry<>(userId, filmId);
-    }
-
-    private static Map<Long, ArrayList<Long>> getDataMap(List<Map.Entry<Long, Long>> dataList) {
-        Map<Long, ArrayList<Long>> data = new HashMap<>();
-        for (Map.Entry<Long, Long> entry : dataList) {
-            Long entryKey = entry.getKey();
-            if (data.containsKey(entryKey)) {
-                Long value = entry.getValue();
-                data.get(entryKey).add(value);
-            } else {
-                data.put(entryKey, new ArrayList<>(Collections.singletonList(entry.getValue())));
-            }
-        }
-        return data;
-    }
-
-    private static Long getMostIntersectionsUserId(Long id, Map<Long, ArrayList<Long>> data) {
-        /* Мапа количества совпадений понравившихся фильмов у пользователя запросившего рекомендацию
-        и всех других пользователей, ставивших лайки. key - id пользователя, value - количество совпадений */
-
-        Map<Long, Long> frequency = new HashMap<>();
-
-        for (Map.Entry<Long, ArrayList<Long>> user : data.entrySet()) {
-            if (!user.getKey().equals(id)) {
-                Long intersectionsCount =  data.get(id)
-                        .stream()
-                        .filter((user.getValue()::contains))
-                        .count();
-                frequency.put(user.getKey(), intersectionsCount);
-            }
-        }
-
-        Optional<Map.Entry<Long, Long>> mostIntersectionsUser = frequency.entrySet()
-                .stream()
-                .max(Map.Entry.comparingByValue());
-
-        return mostIntersectionsUser.map(Map.Entry::getKey).orElse(null);
     }
 
     public List<Film> getListPopularFilm(long count) {
@@ -362,13 +279,6 @@ public class DbFilmStorage implements FilmStorage {
         return getFilmsSortedByPopularity(matchingIds);
     }
 
-    private Map.Entry<Long, String> mapRowToMapEntryFilmIdFilmName(ResultSet rs, int i) throws SQLException {
-        Long filmId = rs.getLong("film_id");
-        String name = rs.getString("name");
-
-        return new AbstractMap.SimpleEntry<>(filmId, name);
-    }
-
     @Override
     public List<Film> searchFilmsWithoutGenresAndDirectorsByDirector(String query) {
         // Получаем список данных Имя директора + ID фильма
@@ -385,12 +295,6 @@ public class DbFilmStorage implements FilmStorage {
         return getFilmsSortedByPopularity(matchingIds);
     }
 
-    private Map.Entry<Long, String> mapRowToMapEntryFilmIdDirectorName(ResultSet rs, int i) throws SQLException {
-        Long filmId = rs.getLong("film_id");
-        String name = rs.getString("director_name");
-        return new AbstractMap.SimpleEntry<>(filmId, name);
-    }
-
     @Override
     public List<Film> searchFilmsWithoutGenresAndDirectorsByTitleAndDirector(String query) {
         List<Film> result = new ArrayList<>();
@@ -403,6 +307,104 @@ public class DbFilmStorage implements FilmStorage {
         return result.stream().distinct()
                 .sorted(Comparator.comparing(Film::getRate).reversed())
                 .collect(Collectors.toList());
+    }
+
+    private Film mapRowToFilm(ResultSet rs, int rowNum) throws SQLException {
+        return new Film(
+                rs.getLong("film_id"),
+                rs.getString("name"),
+                rs.getString("description"),
+                rs.getDate("release_date"),
+                rs.getLong("duration"),
+                new Mpa(
+                        rs.getLong("films.mpa_id"),
+                        rs.getString("mpa.name"))
+        );
+    }
+
+    private Map.Entry<Long, Long> mapRowToMapEntry(ResultSet rs, int rowNum) throws SQLException {
+        Long filmId = rs.getLong("film_id");
+        Long userId = rs.getLong("user_id");
+        return new AbstractMap.SimpleEntry<>(userId, filmId);
+    }
+
+    private static Map<Long, ArrayList<Long>> getDataMap(List<Map.Entry<Long, Long>> dataList) {
+        Map<Long, ArrayList<Long>> data = new HashMap<>();
+        for (Map.Entry<Long, Long> entry : dataList) {
+            Long entryKey = entry.getKey();
+            if (data.containsKey(entryKey)) {
+                Long value = entry.getValue();
+                data.get(entryKey).add(value);
+            } else {
+                data.put(entryKey, new ArrayList<>(Collections.singletonList(entry.getValue())));
+            }
+        }
+        return data;
+    }
+
+    private static Long getMostIntersectionsUserId(Long id, Map<Long, ArrayList<Long>> data) {
+        /* Мапа количества совпадений понравившихся фильмов у пользователя запросившего рекомендацию
+        и всех других пользователей, ставивших лайки. key - id пользователя, value - количество совпадений */
+
+        Map<Long, Long> frequency = new HashMap<>();
+
+        for (Map.Entry<Long, ArrayList<Long>> user : data.entrySet()) {
+            if (!user.getKey().equals(id)) {
+                Long intersectionsCount =  data.get(id)
+                        .stream()
+                        .filter((user.getValue()::contains))
+                        .count();
+                frequency.put(user.getKey(), intersectionsCount);
+            }
+        }
+
+        Optional<Map.Entry<Long, Long>> mostIntersectionsUser = frequency.entrySet()
+                .stream()
+                .max(Map.Entry.comparingByValue());
+
+        return mostIntersectionsUser.map(Map.Entry::getKey).orElse(null);
+    }
+
+    private Map.Entry<Long, String> mapRowToMapEntryFilmIdFilmName(ResultSet rs, int i) throws SQLException {
+        Long filmId = rs.getLong("film_id");
+        String name = rs.getString("name");
+
+        return new AbstractMap.SimpleEntry<>(filmId, name);
+    }
+
+    private Map.Entry<Long, String> mapRowToMapEntryFilmIdDirectorName(ResultSet rs, int i) throws SQLException {
+        Long filmId = rs.getLong("film_id");
+        String name = rs.getString("director_name");
+        return new AbstractMap.SimpleEntry<>(filmId, name);
+    }
+
+    private Film getFilmByIdWithoutGenres(Long id) {
+        String sqlQuery = "" +
+                "SELECT film_id, films.name, description, release_date, duration, films.mpa_id, mpa.name " +
+                "FROM films " +
+                "JOIN mpa ON films.mpa_id = mpa.mpa_id " +
+                "WHERE film_id = ?";
+        return jdbcTemplate.queryForObject(sqlQuery, this::mapRowToFilm, id);
+    }
+
+    private void addGenres(Set<Genre> genres, Long id) {
+        String sqlQuery = "" +
+                "INSERT INTO genres (film_id, genre_id) " +
+                "VALUES (?, ?)";
+        jdbcTemplate.batchUpdate(sqlQuery, genres, 100, (ps, genre) -> {
+            ps.setLong(1, id);
+            ps.setLong(2, genre.getId());
+        });
+    }
+
+    private void addDirectors(Set<Director> directors, Long id) {
+        String sqlQuery = "" +
+                "INSERT INTO directors (director_id, film_id) " +
+                "VALUES (?, ?)";
+        jdbcTemplate.batchUpdate(sqlQuery, directors, 100, (ps, director) -> {
+            ps.setLong(1, director.getId());
+            ps.setLong(2, id);
+        });
     }
 
     private static List<Long> getMatchingIds(String query, List<Map.Entry<Long, String>> dataList) {

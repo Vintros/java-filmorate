@@ -77,16 +77,6 @@ public class FilmService {
         return addFilmsGenres(films);
     }
 
-    private List<Film> addFilmsGenres(List<Film> films) {
-        Map<Long, List<Genre>> genresByFilmsId = genreStorage.getGenresByFilmsId();
-        for (Film film : films) {
-            if (genresByFilmsId.get(film.getId()) != null) {
-                film.getGenres().addAll(genresByFilmsId.get(film.getId()));
-            }
-        }
-        return films;
-    }
-
     public Film addFilm(Film film) {
         validateFilmNotExist(film);
         log.info("Фильм {} добавлен в коллекцию", film.getName());
@@ -146,9 +136,19 @@ public class FilmService {
     public List<Film> getCommonFilms(Long userId, Long friendId) {
         validateUser(userId);
         validateUser(friendId);
-        log.info("Запрошен список общих фильмов пользлователей с id: {} и {}", userId, friendId);
+        log.info("Запрошен список общих фильмов пользователей с id: {} и {}", userId, friendId);
         List<Film> films = filmStorage.getCommonFilms(userId, friendId);
         return populateFilmsWithGenresAndDirectors(films);
+    }
+
+    private List<Film> addFilmsGenres(List<Film> films) {
+        Map<Long, List<Genre>> genresByFilmsId = genreStorage.getGenresByFilmsId();
+        for (Film film : films) {
+            if (genresByFilmsId.get(film.getId()) != null) {
+                film.getGenres().addAll(genresByFilmsId.get(film.getId()));
+            }
+        }
+        return films;
     }
 
     private List<Film> populateFilmsWithGenresAndDirectors(List<Film> films) {
