@@ -6,12 +6,12 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.storage.feed.FeedStorage;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.review.ReviewStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.Date;
 import java.util.List;
-
-import static ru.yandex.practicum.filmorate.validator.Validator.*;
 
 @Service
 @Slf4j
@@ -20,10 +20,12 @@ public class ReviewService {
 
     private final ReviewStorage reviewStorage;
     private final FeedStorage feedStorage;
+    private final FilmStorage filmStorage;
+    private final UserStorage userStorage;
 
     public Review addReview(Review review) {
-        validateFilm(review.getFilmId());
-        validateUser(review.getUserId());
+        filmStorage.checkFilmExistsById(review.getFilmId());
+        userStorage.checkUserExistsById(review.getUserId());
         Review createdReview = reviewStorage.addReview(review);
         feedStorage.saveUserEvent(new Event(createdReview.getUserId(), createdReview.getReviewId(), "REVIEW", "ADD",
                 new Date()));
@@ -32,7 +34,7 @@ public class ReviewService {
     }
 
     public Review getReviewById(Long id) {
-        validateReview(id);
+        reviewStorage.checkReviewExistsById(id);
         log.info("Review with id: {} is requested", id);
         return reviewStorage.getReviewById(id);
     }
@@ -59,22 +61,22 @@ public class ReviewService {
     }
 
     public void addLikeToReview(Long id, Long userId) {
-        validateReview(id);
-        validateUser(userId);
+        reviewStorage.checkReviewExistsById(id);
+        userStorage.checkUserExistsById(userId);
         reviewStorage.addLikeToReview(id, userId);
         log.info("User with id: {} liked the review with id: {}", userId, id);
     }
 
     public void addDislikeToReview(Long id, Long userId) {
-        validateReview(id);
-        validateUser(userId);
+        reviewStorage.checkReviewExistsById(id);
+        userStorage.checkUserExistsById(userId);
         reviewStorage.addDislikeToReview(id, userId);
         log.info("User with id: {} disliked the review with id: {}", userId, id);
     }
 
     public void deleteLikeOrDislikeToReview(Long id, Long userId) {
-        validateReview(id);
-        validateUser(userId);
+        reviewStorage.checkReviewExistsById(id);
+        userStorage.checkUserExistsById(userId);
         reviewStorage.deleteLikeOrDislikeToReview(id, userId);
         log.info("User with id: {} deleted the review rating with id: {}", userId, id);
     }

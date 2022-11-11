@@ -1,10 +1,13 @@
 package ru.yandex.practicum.filmorate.storage.director;
 
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.exception.ExistsException;
+import ru.yandex.practicum.filmorate.exception.UnknownDirectorException;
 import ru.yandex.practicum.filmorate.model.Director;
 
 import java.sql.PreparedStatement;
@@ -44,7 +47,7 @@ public class DbDirectorStorage implements DirectorStorage {
                 "VALUES (?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(sqlQuery, new String[] {"director_id"});
+            PreparedStatement ps = connection.prepareStatement(sqlQuery, new String[]{"director_id"});
             ps.setString(1, director.getName());
             return ps;
         }, keyHolder);
@@ -89,6 +92,27 @@ public class DbDirectorStorage implements DirectorStorage {
                 "    FROM directors " +
                 "    WHERE film_id = ?)";
         return jdbcTemplate.query(sqlQuery, new DirectorMapper(), id);
+    }
+
+    @Override
+    public void checkDirectorExistsById(Long id) {
+        try {
+            getDirectorById(id);
+        } catch (EmptyResultDataAccessException e) {
+            throw new UnknownDirectorException(String.format("Режиссёр с id: %d не найден", id));
+        }
+    }
+
+    @Override
+    public void checkDirectorNotExistById(Long id) {
+        String sqlQuery = "" +
+                "SELECT EXISTS " +
+                "  (SELECT director_id " +
+                "   FROM director " +
+                "   WHERE director_id = ?)";
+        jdbcTemplate.query(sqlQuery, (rs) -> {
+            if (rs.getBoolean(1)) throw new ExistsException("Режиссёр уже зарегистрирован");
+        }, id);
     }
 
     private Map<Long, List<Director>> extractDirectorsByFilmId(ResultSet rs) throws SQLException {

@@ -382,6 +382,7 @@ class UserControllerTest {
         Film film1 = new Film("Name 1", "Description Film 1", Date.valueOf(LocalDate.of(2000, 1, 1)), 200L, new Mpa(1L, null));
         Film film2 = new Film("Name 2", "Description Film 2", Date.valueOf(LocalDate.of(2000, 1, 1)), 200L, new Mpa(1L, null));
         Film film3 = new Film("Name 3", "Description Film 3", Date.valueOf(LocalDate.of(2000, 1, 1)), 200L, new Mpa(1L, null));
+        Film film4 = new Film("Name 4", "Description Film 4", Date.valueOf(LocalDate.of(2000, 1, 1)), 200L, new Mpa(1L, null));
 
         postUser(user1);
         postUser(user2);
@@ -390,21 +391,23 @@ class UserControllerTest {
         postFilm(film1);
         postFilm(film2);
         postFilm(film3);
+        postFilm(film4);
 
         likeFilm(1L,1L);
         likeFilm(2L,1L);
         likeFilm(1L,2L);
         likeFilm(2L,2L);
         likeFilm(3L,2L);
+        likeFilm(4L,2L);
+        likeFilm(3L,3L);
 
         mockMvc.perform(get("/users/{id}/recommendations", 1))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[0].id").value(3))
                 .andExpect(jsonPath("$[0].name").value("Name 3"))
-                .andExpect(jsonPath("$[0].description").value("Description Film 3"))
-                .andExpect(jsonPath("$[0].releaseDate").value("2000-01-01"))
-                .andExpect(jsonPath("$[0].duration").value(200));
+                .andExpect(jsonPath("$[1].id").value(4))
+                .andExpect(jsonPath("$[1].name").value("Name 4"));
     }
 
     private void postUser(User user) throws Exception {

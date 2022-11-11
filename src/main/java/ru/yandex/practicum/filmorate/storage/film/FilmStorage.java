@@ -182,4 +182,20 @@ public interface FilmStorage {
      * и режиссёру.
      */
     List<Film> searchFilmsWithoutGenresAndDirectorsByTitleAndDirector(String query);
+
+    /**
+     * Метод проверяет наличие фильма
+     * в хранилище.
+     *
+     * @param id идентификатор фильма.
+     */
+    void checkFilmExistsById(Long id);
+
+    /**
+     * Метод проверяет отсутствие фильма
+     * в хранилище.
+     *
+     * @param id идентификатор фильма.
+     */
+    void checkFilmNotExistById(Long id);
 }
