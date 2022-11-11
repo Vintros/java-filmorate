@@ -59,6 +59,13 @@ public class DbGenreStorage implements GenreStorage {
         return jdbcTemplate.query(sqlQuery, this::extractGenresByFilmId);
     }
 
+    public Genre mapRowToGenre(ResultSet rs, int rowNum) throws SQLException {
+        return new Genre(
+                rs.getLong("genre_id"),
+                rs.getString("name")
+        );
+    }
+
     private Map<Long, List<Genre>> extractGenresByFilmId(ResultSet rs) throws SQLException {
         Map<Long, List<Genre>> genresByFilmId = new LinkedHashMap<>();
         while (rs.next()) {
@@ -71,12 +78,5 @@ public class DbGenreStorage implements GenreStorage {
             genresByFilmId.get(filmId).add(genre);
         }
         return genresByFilmId;
-    }
-
-    public Genre mapRowToGenre(ResultSet rs, int rowNum) throws SQLException {
-        return new Genre(
-                rs.getLong("genre_id"),
-                rs.getString("name")
-        );
     }
 }
