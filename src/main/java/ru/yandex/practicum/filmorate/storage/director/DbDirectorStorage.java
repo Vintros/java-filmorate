@@ -99,7 +99,7 @@ public class DbDirectorStorage implements DirectorStorage {
         try {
             getDirectorById(id);
         } catch (EmptyResultDataAccessException e) {
-            throw new UnknownDirectorException(String.format("Режиссёр с id: %d не найден", id));
+            throw new UnknownDirectorException(String.format("Director with id: %d is not found", id));
         }
     }
 
@@ -111,7 +111,7 @@ public class DbDirectorStorage implements DirectorStorage {
                 "   FROM director " +
                 "   WHERE director_id = ?)";
         jdbcTemplate.query(sqlQuery, (rs) -> {
-            if (rs.getBoolean(1)) throw new ExistsException("Режиссёр уже зарегистрирован");
+            if (rs.getBoolean(1)) throw new ExistsException("The director already exists");
         }, id);
     }
 

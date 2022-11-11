@@ -20,7 +20,7 @@ public class Film {
 
     private Long id;
     @NonNull
-    @NotBlank(message = "Empty movie title field")
+    @NotBlank(message = "Empty film title field")
     private String name;
     @NonNull
     @Size(max = 200, message = "The description should contain no more than 200 characters")

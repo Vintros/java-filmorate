@@ -30,7 +30,7 @@ public class UserService {
         User firstUser = userStorage.getUserById(id);
         User secondUser = userStorage.getUserById(friendId);
         if (firstUser.getFriends().contains(secondUser)) {
-            throw new ExistsException(String.format("User with id: %d, has already made user with id: %d his friend", id, friendId));
+            throw new ExistsException(String.format("User with id: %d has already made user with id: %d his friend", id, friendId));
         }
         userStorage.addFriend(id, friendId);
         feedStorage.saveUserEvent(new Event(id, friendId, "FRIEND", "ADD",  new Date()));
@@ -99,7 +99,7 @@ public class UserService {
 
     public List<Film> getRecommendations(Long id) {
         userStorage.checkUserExistsById(id);
-        log.info("A user with id - {} requested a list of recommended movies", id);
+        log.info("A user with id: {} requested a list of recommended films", id);
         return filmStorage.getRecommendations(id);
     }
 

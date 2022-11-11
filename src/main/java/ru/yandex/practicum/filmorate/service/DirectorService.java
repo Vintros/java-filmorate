@@ -21,7 +21,7 @@ public class DirectorService {
 
     public Director getDirectorById(Long id) {
         directorStorage.checkDirectorExistsById(id);
-        log.info("Director with id: {}, is requested", id);
+        log.info("Director with id: {} is requested", id);
         return directorStorage.getDirectorById(id);
     }
 
@@ -29,19 +29,19 @@ public class DirectorService {
         if (director.getId() != null) {
             directorStorage.checkDirectorNotExistById(director.getId());
         }
-        log.info("Director {} is added to the repository", director.getName());
+        log.info("Director - {} is added to the repository", director.getName());
         return directorStorage.addDirector(director);
     }
 
     public Director updateDirector(Director director) {
         directorStorage.checkDirectorExistsById(director.getId());
-        log.info("Director with id: {}, is updated", director.getId());
+        log.info("Director with id: {} is updated", director.getId());
         return directorStorage.updateDirector(director);
     }
 
     public void removeDirectorById(Long id) {
         directorStorage.checkDirectorExistsById(id);
-        log.info("Director with id: {}, is deleted", id);
+        log.info("Director with id: {} is deleted", id);
         directorStorage.removeDirectorById(id);
     }
 }
