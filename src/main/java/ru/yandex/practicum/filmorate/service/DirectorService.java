@@ -20,25 +20,27 @@ public class DirectorService {
     }
 
     public Director getDirectorById(Long id) {
-        directorStorage.checkDirectorExists(id);
+        directorStorage.checkDirectorExistsById(id);
         log.info("Режиссёр с id: {}, запрошен", id);
         return directorStorage.getDirectorById(id);
     }
 
     public Director addDirector(Director director) {
-        directorStorage.checkDirectorNotExist(director);
+        if (director.getId() != null) {
+            directorStorage.checkDirectorNotExistById(director.getId());
+        }
         log.info("Режиссёр {} добавлен в хранилище", director.getName());
         return directorStorage.addDirector(director);
     }
 
     public Director updateDirector(Director director) {
-        directorStorage.checkDirectorExists(director.getId());
+        directorStorage.checkDirectorExistsById(director.getId());
         log.info("Режиссёр с id: {}, обновлён", director.getId());
         return directorStorage.updateDirector(director);
     }
 
     public void removeDirectorById(Long id) {
-        directorStorage.checkDirectorExists(id);
+        directorStorage.checkDirectorExistsById(id);
         log.info("Режиссёр с id: {}, удалён", id);
         directorStorage.removeDirectorById(id);
     }

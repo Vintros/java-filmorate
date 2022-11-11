@@ -313,7 +313,7 @@ public class DbFilmStorage implements FilmStorage {
     }
 
     @Override
-    public void checkFilmExists(Long id) {
+    public void checkFilmExistsById(Long id) {
         try {
             getFilmById(id);
         } catch (DataAccessException e) {
@@ -322,18 +322,15 @@ public class DbFilmStorage implements FilmStorage {
     }
 
     @Override
-    public void checkFilmNotExist(Film film) {
-        if (film.getId() == null) {
-            return;
-        }
+    public void checkFilmNotExistById(Long id) {
         String sqlQuery = "" +
                 "SELECT EXISTS " +
                 "  (SELECT film_id " +
                 "   FROM films " +
                 "   WHERE film_id = ?)";
         jdbcTemplate.query(sqlQuery, (rs) -> {
-            if (rs.getLong(1) == film.getId()) throw new ExistsException("Фильм уже зарегистрирован");
-        }, film.getId());
+            if (rs.getBoolean(1)) throw new ExistsException("Фильм уже зарегистрирован");
+        }, id);
     }
 
     private Film mapRowToFilm(ResultSet rs, int rowNum) throws SQLException {

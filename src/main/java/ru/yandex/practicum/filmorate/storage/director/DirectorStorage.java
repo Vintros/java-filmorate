@@ -73,15 +73,15 @@ public interface DirectorStorage {
      * Метод проверяет наличие режиссёра
      * в хранилище.
      *
-     * @param directorId идентификатор режиссёра.
+     * @param id идентификатор режиссёра.
      */
-    void checkDirectorExists(Long directorId);
+    void checkDirectorExistsById(Long id);
 
     /**
      * Метод проверяет отсутствие режиссёра
      * в хранилище.
      *
-     * @param director проверяемый режиссёр.
+     * @param id идентификатор режиссёра.
      */
-    void checkDirectorNotExist(Director director);
+    void checkDirectorNotExistById(Long id);
 }

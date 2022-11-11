@@ -35,8 +35,8 @@ public class FilmService {
     private final UserStorage userStorage;
 
     public void addLikeFilm(Long id, Long userId) {
-        filmStorage.checkFilmExists(id);
-        userStorage.checkUserExists(userId);
+        filmStorage.checkFilmExistsById(id);
+        userStorage.checkUserExistsById(userId);
         Film film = filmStorage.getFilmById(id);
         if (film.getUsersIdLiked().contains(userId)) {
             throw new ExistsException(String.format("Пользователь с id: %d уже поставил лайк фильму с id: %d",
@@ -48,8 +48,8 @@ public class FilmService {
     }
 
     public void removeLikeFilm(Long id, Long userId) {
-        filmStorage.checkFilmExists(id);
-        userStorage.checkUserExists(userId);
+        filmStorage.checkFilmExistsById(id);
+        userStorage.checkUserExistsById(userId);
         try {
             filmStorage.removeLikeFilm(id, userId);
         } catch (DataAccessException e) {
@@ -80,13 +80,15 @@ public class FilmService {
     }
 
     public Film addFilm(Film film) {
-        filmStorage.checkFilmNotExist(film);
+        if (film.getId() != null) {
+            filmStorage.checkFilmNotExistById(film.getId());
+        }
         log.info("Фильм {} добавлен в коллекцию", film.getName());
         return filmStorage.addFilm(film);
     }
 
     public Film updateFilm(Film film) {
-        filmStorage.checkFilmExists(film.getId());
+        filmStorage.checkFilmExistsById(film.getId());
         log.info("Фильм {} обновлен", film.getName());
         return filmStorage.updateFilm(film);
     }
@@ -98,19 +100,19 @@ public class FilmService {
     }
 
     public Film getFilmById(Long id) {
-        filmStorage.checkFilmExists(id);
+        filmStorage.checkFilmExistsById(id);
         log.info("Фильм с id: {}, запрошен", id);
         return filmStorage.getFilmById(id);
     }
 
     public void removeFilmById(Long id) {
-        filmStorage.checkFilmExists(id);
+        filmStorage.checkFilmExistsById(id);
         log.info("Фильм с id: {}, удалён из коллекции", id);
         filmStorage.removeFilmById(id);
     }
 
     public List<Film> getFilmsByDirector(Long directorId, String sortBy) {
-        directorStorage.checkDirectorExists(directorId);
+        directorStorage.checkDirectorExistsById(directorId);
         return filmStorage.getFilmsByDirector(directorId, sortBy);
     }
 
@@ -136,8 +138,8 @@ public class FilmService {
     }
 
     public List<Film> getCommonFilms(Long userId, Long friendId) {
-        userStorage.checkUserExists(userId);
-        userStorage.checkUserExists(friendId);
+        userStorage.checkUserExistsById(userId);
+        userStorage.checkUserExistsById(friendId);
         log.info("Запрошен список общих фильмов пользователей с id: {} и {}", userId, friendId);
         List<Film> films = filmStorage.getCommonFilms(userId, friendId);
         return populateFilmsWithGenresAndDirectors(films);

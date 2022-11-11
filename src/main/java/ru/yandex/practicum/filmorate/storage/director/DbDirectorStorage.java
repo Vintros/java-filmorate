@@ -95,7 +95,7 @@ public class DbDirectorStorage implements DirectorStorage {
     }
 
     @Override
-    public void checkDirectorExists(Long id) {
+    public void checkDirectorExistsById(Long id) {
         try {
             getDirectorById(id);
         } catch (EmptyResultDataAccessException e) {
@@ -104,18 +104,15 @@ public class DbDirectorStorage implements DirectorStorage {
     }
 
     @Override
-    public void checkDirectorNotExist(Director director) {
-        if (director.getId() == null) {
-            return;
-        }
+    public void checkDirectorNotExistById(Long id) {
         String sqlQuery = "" +
                 "SELECT EXISTS " +
                 "  (SELECT director_id " +
                 "   FROM director " +
                 "   WHERE director_id = ?)";
         jdbcTemplate.query(sqlQuery, (rs) -> {
-            if (rs.getLong(1) == director.getId()) throw new ExistsException("Режиссёр уже зарегистрирован");
-        }, director.getId());
+            if (rs.getBoolean(1)) throw new ExistsException("Режиссёр уже зарегистрирован");
+        }, id);
     }
 
     private Map<Long, List<Director>> extractDirectorsByFilmId(ResultSet rs) throws SQLException {

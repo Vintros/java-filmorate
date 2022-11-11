@@ -122,7 +122,7 @@ public class DbUserStorage implements UserStorage {
     }
 
     @Override
-    public void checkUserExists(Long id) {
+    public void checkUserExistsById(Long id) {
         try {
             getUserById(id);
         } catch (DataAccessException e) {
@@ -131,18 +131,15 @@ public class DbUserStorage implements UserStorage {
     }
 
     @Override
-    public void checkUserNotExist(User user) {
-        if (user.getId() == null) {
-            return;
-        }
+    public void checkUserNotExistById(Long id) {
         String sqlQuery = "" +
                 "SELECT EXISTS " +
                 "  (SELECT user_id " +
                 "   FROM users " +
                 "   WHERE user_id = ?)";
         jdbcTemplate.query(sqlQuery, (rs) -> {
-            if (rs.getLong(1) == user.getId()) throw new ExistsException("Пользователь уже зарегистрирован");
-        }, user.getId());
+            if (rs.getBoolean(1)) throw new ExistsException("Пользователь уже зарегистрирован");
+        }, id);
     }
 
     private User mapRowToUser(ResultSet rs, int rowNum) throws SQLException {

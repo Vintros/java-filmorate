@@ -24,8 +24,8 @@ public class ReviewService {
     private final UserStorage userStorage;
 
     public Review addReview(Review review) {
-        filmStorage.checkFilmExists(review.getFilmId());
-        userStorage.checkUserExists(review.getUserId());
+        filmStorage.checkFilmExistsById(review.getFilmId());
+        userStorage.checkUserExistsById(review.getUserId());
         Review createdReview = reviewStorage.addReview(review);
         feedStorage.saveUserEvent(new Event(createdReview.getUserId(), createdReview.getReviewId(), "REVIEW", "ADD",
                 new Date()));
@@ -34,7 +34,7 @@ public class ReviewService {
     }
 
     public Review getReviewById(Long id) {
-        reviewStorage.checkReviewExists(id);
+        reviewStorage.checkReviewExistsById(id);
         log.info("запрошен отзыв с id: {}", id);
         return reviewStorage.getReviewById(id);
     }
@@ -61,22 +61,22 @@ public class ReviewService {
     }
 
     public void addLikeToReview(Long id, Long userId) {
-        reviewStorage.checkReviewExists(id);
-        userStorage.checkUserExists(userId);
+        reviewStorage.checkReviewExistsById(id);
+        userStorage.checkUserExistsById(userId);
         reviewStorage.addLikeToReview(id, userId);
         log.info("пользователь с id: {} поставил лайк отзыву с id: {}", userId, id);
     }
 
     public void addDislikeToReview(Long id, Long userId) {
-        reviewStorage.checkReviewExists(id);
-        userStorage.checkUserExists(userId);
+        reviewStorage.checkReviewExistsById(id);
+        userStorage.checkUserExistsById(userId);
         reviewStorage.addDislikeToReview(id, userId);
         log.info("пользователь с id: {} поставил дизлайк отзыву с id: {}", userId, id);
     }
 
     public void deleteLikeOrDislikeToReview(Long id, Long userId) {
-        reviewStorage.checkReviewExists(id);
-        userStorage.checkUserExists(userId);
+        reviewStorage.checkReviewExistsById(id);
+        userStorage.checkUserExistsById(userId);
         reviewStorage.deleteLikeOrDislikeToReview(id, userId);
         log.info("пользователь с id: {} поставил оценку отзыва с id: {}", userId, id);
     }

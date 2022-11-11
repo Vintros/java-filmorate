@@ -131,7 +131,7 @@ public class DbReviewStorage implements ReviewStorage {
     }
 
     @Override
-    public void checkReviewExists(Long id) {
+    public void checkReviewExistsById(Long id) {
         try {
             getReviewById(id);
         } catch (DataAccessException e) {

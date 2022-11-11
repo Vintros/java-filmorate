@@ -25,8 +25,8 @@ public class UserService {
     private final FeedStorage feedStorage;
 
     public void addFriend(Long id, Long friendId) {
-        userStorage.checkUserExists(id);
-        userStorage.checkUserExists(friendId);
+        userStorage.checkUserExistsById(id);
+        userStorage.checkUserExistsById(friendId);
         User firstUser = userStorage.getUserById(id);
         User secondUser = userStorage.getUserById(friendId);
         if (firstUser.getFriends().contains(secondUser)) {
@@ -38,8 +38,8 @@ public class UserService {
     }
 
     public void deleteFriend(Long id, Long friendId) {
-        userStorage.checkUserExists(id);
-        userStorage.checkUserExists(friendId);
+        userStorage.checkUserExistsById(id);
+        userStorage.checkUserExistsById(friendId);
         User firstUser = userStorage.getUserById(id);
         User secondUser = userStorage.getUserById(friendId);
         if (!firstUser.getFriends().contains(secondUser)) {
@@ -51,28 +51,30 @@ public class UserService {
     }
 
     public List<User> getFriends(Long id) {
-        userStorage.checkUserExists(id);
+        userStorage.checkUserExistsById(id);
         User user = userStorage.getUserById(id);
         log.info(String.format("Пользователь с id: %d запросил список друзей", id));
         return new ArrayList<>(user.getFriends());
     }
 
     public List<User> getCommonFriends(Long id, Long secondId) {
-        userStorage.checkUserExists(id);
-        userStorage.checkUserExists(secondId);
+        userStorage.checkUserExistsById(id);
+        userStorage.checkUserExistsById(secondId);
         log.info(String.format("Пользователь с id: %d запросил список общих друзей с id: %d", id, secondId));
         return userStorage.getCommonFriends(id, secondId);
     }
 
     public User createUser(User user) {
-        userStorage.checkUserNotExist(user);
+        if (user.getId() != null) {
+            userStorage.checkUserNotExistById(user.getId());
+        }
         checkPresenceUserName(user);
         log.info("Добавлен пользователь " + user);
         return userStorage.createUser(user);
     }
 
     public User updateUser(User user) {
-        userStorage.checkUserExists(user.getId());
+        userStorage.checkUserExistsById(user.getId());
         checkPresenceUserName(user);
         log.info("Обновлен пользователь " + user);
         return userStorage.updateUser(user);
@@ -84,25 +86,25 @@ public class UserService {
     }
 
     public User getUserById(Long id) {
-        userStorage.checkUserExists(id);
+        userStorage.checkUserExistsById(id);
         log.info("Запрошен пользователь с id: {}", id);
         return userStorage.getUserById(id);
     }
 
     public void removeUserById(Long id) {
-        userStorage.checkUserExists(id);
+        userStorage.checkUserExistsById(id);
         log.info("удалён пользователь с id: {}", id);
         userStorage.removeUserById(id);
     }
 
     public List<Film> getRecommendations(Long id) {
-        userStorage.checkUserExists(id);
+        userStorage.checkUserExistsById(id);
         log.info("Пользователем с id - {} запрошен список рекомендованных фильмов", id);
         return filmStorage.getRecommendations(id);
     }
 
     public List<Event> getFeed(Long id) {
-        userStorage.checkUserExists(id);
+        userStorage.checkUserExistsById(id);
         return feedStorage.getFeed(id);
     }
 

@@ -189,13 +189,13 @@ public interface FilmStorage {
      *
      * @param id идентификатор фильма.
      */
-    void checkFilmExists(Long id);
+    void checkFilmExistsById(Long id);
 
     /**
      * Метод проверяет отсутствие фильма
      * в хранилище.
      *
-     * @param film проверяемый фильм.
+     * @param id идентификатор фильма.
      */
-    void checkFilmNotExist(Film film);
+    void checkFilmNotExistById(Long id);
 }

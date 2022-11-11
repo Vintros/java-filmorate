@@ -85,13 +85,13 @@ public interface UserStorage {
      *
      * @param id идентификатор пользователя.
      */
-    void checkUserExists(Long id);
+    void checkUserExistsById(Long id);
 
     /**
      * Метод проверяет отсутствие пользователя
      * в хранилище.
      *
-     * @param user проверяемый пользователь.
+     * @param id идентификатор пользователя.
      */
-    void checkUserNotExist(User user);
+    void checkUserNotExistById(Long id);
 }

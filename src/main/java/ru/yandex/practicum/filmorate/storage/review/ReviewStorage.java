@@ -87,5 +87,5 @@ public interface ReviewStorage {
      *
      * @param id идентификатор отзыва.
      */
-    void checkReviewExists(Long id);
+    void checkReviewExistsById(Long id);
 }
