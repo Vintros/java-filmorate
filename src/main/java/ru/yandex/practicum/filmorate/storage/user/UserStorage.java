@@ -78,4 +78,20 @@ public interface UserStorage {
      * @param id идентификатор пользователя.
      */
     void removeUserById(Long id);
+
+    /**
+     * Метод проверяет наличие пользователя
+     * в хранилище.
+     *
+     * @param id идентификатор пользователя.
+     */
+    void checkUserExistsById(Long id);
+
+    /**
+     * Метод проверяет отсутствие пользователя
+     * в хранилище.
+     *
+     * @param id идентификатор пользователя.
+     */
+    void checkUserNotExistById(Long id);
 }

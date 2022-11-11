@@ -1,9 +1,12 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.exception.ExistsException;
+import ru.yandex.practicum.filmorate.exception.UnknownFilmException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -129,7 +132,7 @@ public class DbFilmStorage implements FilmStorage {
     @Override
     public List<Film> getFilmsByDirector(Long directorId, String sortBy) {
         String sql = "" +
-                "SELECT f.film_id, f.name, f.description, f.release_date, f.duration, f.mpa_id, mpa.name, count (l.user_id) " +
+                "SELECT f.film_id, f.name, f.description, f.release_date, f.duration, f.mpa_id, mpa.name, COUNT (l.user_id) " +
                 "FROM films f " +
                 "LEFT OUTER JOIN likes l on f.film_id = l.film_id " +
                 "JOIN mpa ON f.mpa_id = mpa.mpa_id " +
@@ -307,6 +310,27 @@ public class DbFilmStorage implements FilmStorage {
         return result.stream().distinct()
                 .sorted(Comparator.comparing(Film::getRate).reversed())
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public void checkFilmExistsById(Long id) {
+        try {
+            getFilmById(id);
+        } catch (DataAccessException e) {
+            throw new UnknownFilmException(String.format("Фильм с id: %d не найден", id));
+        }
+    }
+
+    @Override
+    public void checkFilmNotExistById(Long id) {
+        String sqlQuery = "" +
+                "SELECT EXISTS " +
+                "  (SELECT film_id " +
+                "   FROM films " +
+                "   WHERE film_id = ?)";
+        jdbcTemplate.query(sqlQuery, (rs) -> {
+            if (rs.getBoolean(1)) throw new ExistsException("Фильм уже зарегистрирован");
+        }, id);
     }
 
     private Film mapRowToFilm(ResultSet rs, int rowNum) throws SQLException {

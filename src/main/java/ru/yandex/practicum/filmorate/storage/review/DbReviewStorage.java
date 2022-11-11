@@ -1,9 +1,11 @@
 package ru.yandex.practicum.filmorate.storage.review;
 
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.exception.UnknownReviewException;
 import ru.yandex.practicum.filmorate.model.Review;
 
 import java.sql.PreparedStatement;
@@ -40,7 +42,8 @@ public class DbReviewStorage implements ReviewStorage {
     @Override
     public Review getReviewById(Long id) {
         String sqlQuery = "" +
-                "SELECT r.review_id, r.film_id, r.user_id, r.content, r.is_positive, COUNT(rrp.review_id) - COUNT(rrn.review_id) AS useful " +
+                "SELECT r.review_id, r.film_id, r.user_id, r.content, r.is_positive, " +
+                "       COUNT(rrp.review_id) - COUNT(rrn.review_id) AS useful " +
                 "FROM reviews AS r " +
                 "LEFT JOIN " +
                 "   (SELECT review_id " +
@@ -82,7 +85,8 @@ public class DbReviewStorage implements ReviewStorage {
     @Override
     public List<Review> getReviewsByFilmIdOrAll(Long filmId, Long count) {
         String sqlQuery = "" +
-                "SELECT r.review_id, r.film_id, r.user_id, r.content, r.is_positive, COUNT(rrp.review_id) - COUNT(rrn.review_id) AS useful " +
+                "SELECT r.review_id, r.film_id, r.user_id, r.content, r.is_positive, " +
+                "       COUNT(rrp.review_id) - COUNT(rrn.review_id) AS useful " +
                 "FROM reviews AS r " +
                 "LEFT JOIN " +
                 "   (SELECT review_id " +
@@ -124,6 +128,15 @@ public class DbReviewStorage implements ReviewStorage {
                 "DELETE FROM reviews_rating " +
                 "WHERE review_id = ? AND user_id = ?";
         jdbcTemplate.update(sqlQuery, id, userId);
+    }
+
+    @Override
+    public void checkReviewExistsById(Long id) {
+        try {
+            getReviewById(id);
+        } catch (DataAccessException e) {
+            throw new UnknownReviewException(String.format("Отзыв с id: %d не найден", id));
+        }
     }
 
     private Review mapRowToReview(ResultSet rs, int rowNum) throws SQLException {

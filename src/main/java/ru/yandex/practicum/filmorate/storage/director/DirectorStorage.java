@@ -68,4 +68,20 @@ public interface DirectorStorage {
      * идентификатору фильма.
      */
     List<Director> getDirectorsByFilmId(Long id);
+
+    /**
+     * Метод проверяет наличие режиссёра
+     * в хранилище.
+     *
+     * @param id идентификатор режиссёра.
+     */
+    void checkDirectorExistsById(Long id);
+
+    /**
+     * Метод проверяет отсутствие режиссёра
+     * в хранилище.
+     *
+     * @param id идентификатор режиссёра.
+     */
+    void checkDirectorNotExistById(Long id);
 }
