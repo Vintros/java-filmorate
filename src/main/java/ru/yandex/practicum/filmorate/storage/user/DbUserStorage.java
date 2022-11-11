@@ -122,7 +122,7 @@ public class DbUserStorage implements UserStorage {
     }
 
     @Override
-    public void validateUser(Long id) {
+    public void checkUserExists(Long id) {
         try {
             getUserById(id);
         } catch (DataAccessException e) {

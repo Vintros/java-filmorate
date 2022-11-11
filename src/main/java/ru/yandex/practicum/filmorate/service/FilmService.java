@@ -35,8 +35,8 @@ public class FilmService {
     private final UserStorage userStorage;
 
     public void addLikeFilm(Long id, Long userId) {
-        filmStorage.validateFilm(id);
-        userStorage.validateUser(userId);
+        filmStorage.checkFilmExists(id);
+        userStorage.checkUserExists(userId);
         Film film = filmStorage.getFilmById(id);
         if (film.getUsersIdLiked().contains(userId)) {
             throw new ExistsException(String.format("Пользователь с id: %d уже поставил лайк фильму с id: %d",
@@ -48,8 +48,8 @@ public class FilmService {
     }
 
     public void removeLikeFilm(Long id, Long userId) {
-        filmStorage.validateFilm(id);
-        userStorage.validateUser(userId);
+        filmStorage.checkFilmExists(id);
+        userStorage.checkUserExists(userId);
         try {
             filmStorage.removeLikeFilm(id, userId);
         } catch (DataAccessException e) {
@@ -86,7 +86,7 @@ public class FilmService {
     }
 
     public Film updateFilm(Film film) {
-        filmStorage.validateFilm(film.getId());
+        filmStorage.checkFilmExists(film.getId());
         log.info("Фильм {} обновлен", film.getName());
         return filmStorage.updateFilm(film);
     }
@@ -98,19 +98,19 @@ public class FilmService {
     }
 
     public Film getFilmById(Long id) {
-        filmStorage.validateFilm(id);
+        filmStorage.checkFilmExists(id);
         log.info("Фильм с id: {}, запрошен", id);
         return filmStorage.getFilmById(id);
     }
 
     public void removeFilmById(Long id) {
-        filmStorage.validateFilm(id);
+        filmStorage.checkFilmExists(id);
         log.info("Фильм с id: {}, удалён из коллекции", id);
         filmStorage.removeFilmById(id);
     }
 
     public List<Film> getFilmsByDirector(Long directorId, String sortBy) {
-        directorStorage.validateDirector(directorId);
+        directorStorage.checkDirectorExists(directorId);
         return filmStorage.getFilmsByDirector(directorId, sortBy);
     }
 
@@ -136,8 +136,8 @@ public class FilmService {
     }
 
     public List<Film> getCommonFilms(Long userId, Long friendId) {
-        userStorage.validateUser(userId);
-        userStorage.validateUser(friendId);
+        userStorage.checkUserExists(userId);
+        userStorage.checkUserExists(friendId);
         log.info("Запрошен список общих фильмов пользователей с id: {} и {}", userId, friendId);
         List<Film> films = filmStorage.getCommonFilms(userId, friendId);
         return populateFilmsWithGenresAndDirectors(films);

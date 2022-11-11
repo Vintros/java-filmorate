@@ -24,8 +24,8 @@ public class ReviewService {
     private final UserStorage userStorage;
 
     public Review addReview(Review review) {
-        filmStorage.validateFilm(review.getFilmId());
-        userStorage.validateUser(review.getUserId());
+        filmStorage.checkFilmExists(review.getFilmId());
+        userStorage.checkUserExists(review.getUserId());
         Review createdReview = reviewStorage.addReview(review);
         feedStorage.saveUserEvent(new Event(createdReview.getUserId(), createdReview.getReviewId(), "REVIEW", "ADD",
                 new Date()));
@@ -34,7 +34,7 @@ public class ReviewService {
     }
 
     public Review getReviewById(Long id) {
-        reviewStorage.validateReview(id);
+        reviewStorage.checkReviewExists(id);
         log.info("запрошен отзыв с id: {}", id);
         return reviewStorage.getReviewById(id);
     }
@@ -61,22 +61,22 @@ public class ReviewService {
     }
 
     public void addLikeToReview(Long id, Long userId) {
-        reviewStorage.validateReview(id);
-        userStorage.validateUser(userId);
+        reviewStorage.checkReviewExists(id);
+        userStorage.checkUserExists(userId);
         reviewStorage.addLikeToReview(id, userId);
         log.info("пользователь с id: {} поставил лайк отзыву с id: {}", userId, id);
     }
 
     public void addDislikeToReview(Long id, Long userId) {
-        reviewStorage.validateReview(id);
-        userStorage.validateUser(userId);
+        reviewStorage.checkReviewExists(id);
+        userStorage.checkUserExists(userId);
         reviewStorage.addDislikeToReview(id, userId);
         log.info("пользователь с id: {} поставил дизлайк отзыву с id: {}", userId, id);
     }
 
     public void deleteLikeOrDislikeToReview(Long id, Long userId) {
-        reviewStorage.validateReview(id);
-        userStorage.validateUser(userId);
+        reviewStorage.checkReviewExists(id);
+        userStorage.checkUserExists(userId);
         reviewStorage.deleteLikeOrDislikeToReview(id, userId);
         log.info("пользователь с id: {} поставил оценку отзыва с id: {}", userId, id);
     }

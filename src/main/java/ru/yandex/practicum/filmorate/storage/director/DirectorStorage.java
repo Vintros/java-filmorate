@@ -69,7 +69,19 @@ public interface DirectorStorage {
      */
     List<Director> getDirectorsByFilmId(Long id);
 
-    void validateDirector(Long directorId);
+    /**
+     * Метод проверяет наличие режиссёра
+     * в хранилище.
+     *
+     * @param directorId идентификатор режиссёра.
+     */
+    void checkDirectorExists(Long directorId);
 
+    /**
+     * Метод проверяет отсутствие режиссёра
+     * в хранилище.
+     *
+     * @param director проверяемый режиссёр.
+     */
     void checkDirectorNotExist(Director director);
 }

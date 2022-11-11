@@ -20,7 +20,7 @@ public class DirectorService {
     }
 
     public Director getDirectorById(Long id) {
-        directorStorage.validateDirector(id);
+        directorStorage.checkDirectorExists(id);
         log.info("Режиссёр с id: {}, запрошен", id);
         return directorStorage.getDirectorById(id);
     }
@@ -32,13 +32,13 @@ public class DirectorService {
     }
 
     public Director updateDirector(Director director) {
-        directorStorage.validateDirector(director.getId());
+        directorStorage.checkDirectorExists(director.getId());
         log.info("Режиссёр с id: {}, обновлён", director.getId());
         return directorStorage.updateDirector(director);
     }
 
     public void removeDirectorById(Long id) {
-        directorStorage.validateDirector(id);
+        directorStorage.checkDirectorExists(id);
         log.info("Режиссёр с id: {}, удалён", id);
         directorStorage.removeDirectorById(id);
     }

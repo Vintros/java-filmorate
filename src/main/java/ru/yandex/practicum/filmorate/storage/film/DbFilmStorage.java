@@ -132,7 +132,7 @@ public class DbFilmStorage implements FilmStorage {
     @Override
     public List<Film> getFilmsByDirector(Long directorId, String sortBy) {
         String sql = "" +
-                "SELECT f.film_id, f.name, f.description, f.release_date, f.duration, f.mpa_id, mpa.name, count (l.user_id) " +
+                "SELECT f.film_id, f.name, f.description, f.release_date, f.duration, f.mpa_id, mpa.name, COUNT (l.user_id) " +
                 "FROM films f " +
                 "LEFT OUTER JOIN likes l on f.film_id = l.film_id " +
                 "JOIN mpa ON f.mpa_id = mpa.mpa_id " +
@@ -312,6 +312,30 @@ public class DbFilmStorage implements FilmStorage {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public void checkFilmExists(Long id) {
+        try {
+            getFilmById(id);
+        } catch (DataAccessException e) {
+            throw new UnknownFilmException(String.format("Фильм с id: %d не найден", id));
+        }
+    }
+
+    @Override
+    public void checkFilmNotExist(Film film) {
+        if (film.getId() == null) {
+            return;
+        }
+        String sqlQuery = "" +
+                "SELECT EXISTS " +
+                "  (SELECT film_id " +
+                "   FROM films " +
+                "   WHERE film_id = ?)";
+        jdbcTemplate.query(sqlQuery, (rs) -> {
+            if (rs.getLong(1) == film.getId()) throw new ExistsException("Фильм уже зарегистрирован");
+        }, film.getId());
+    }
+
     private Film mapRowToFilm(ResultSet rs, int rowNum) throws SQLException {
         return new Film(
                 rs.getLong("film_id"),
@@ -389,29 +413,6 @@ public class DbFilmStorage implements FilmStorage {
                 "JOIN mpa ON films.mpa_id = mpa.mpa_id " +
                 "WHERE film_id = ?";
         return jdbcTemplate.queryForObject(sqlQuery, this::mapRowToFilm, id);
-    }
-    @Override
-    public void validateFilm(Long id) {
-        try {
-            getFilmById(id);
-        } catch (DataAccessException e) {
-            throw new UnknownFilmException(String.format("Фильм с id: %d не найден", id));
-        }
-    }
-
-    @Override
-    public void checkFilmNotExist(Film film) {
-        if (film.getId() == null) {
-            return;
-        }
-        String sqlQuery = "" +
-                "SELECT EXISTS " +
-                "  (SELECT film_id " +
-                "   FROM films " +
-                "   WHERE film_id = ?)";
-        jdbcTemplate.query(sqlQuery, (rs) -> {
-            if (rs.getLong(1) == film.getId()) throw new ExistsException("Фильм уже зарегистрирован");
-        }, film.getId());
     }
 
     private void addGenres(Set<Genre> genres, Long id) {

@@ -42,7 +42,8 @@ public class DbReviewStorage implements ReviewStorage {
     @Override
     public Review getReviewById(Long id) {
         String sqlQuery = "" +
-                "SELECT r.review_id, r.film_id, r.user_id, r.content, r.is_positive, COUNT(rrp.review_id) - COUNT(rrn.review_id) AS useful " +
+                "SELECT r.review_id, r.film_id, r.user_id, r.content, r.is_positive, " +
+                "       COUNT(rrp.review_id) - COUNT(rrn.review_id) AS useful " +
                 "FROM reviews AS r " +
                 "LEFT JOIN " +
                 "   (SELECT review_id " +
@@ -84,7 +85,8 @@ public class DbReviewStorage implements ReviewStorage {
     @Override
     public List<Review> getReviewsByFilmIdOrAll(Long filmId, Long count) {
         String sqlQuery = "" +
-                "SELECT r.review_id, r.film_id, r.user_id, r.content, r.is_positive, COUNT(rrp.review_id) - COUNT(rrn.review_id) AS useful " +
+                "SELECT r.review_id, r.film_id, r.user_id, r.content, r.is_positive, " +
+                "       COUNT(rrp.review_id) - COUNT(rrn.review_id) AS useful " +
                 "FROM reviews AS r " +
                 "LEFT JOIN " +
                 "   (SELECT review_id " +
@@ -129,7 +131,7 @@ public class DbReviewStorage implements ReviewStorage {
     }
 
     @Override
-    public void validateReview(Long id) {
+    public void checkReviewExists(Long id) {
         try {
             getReviewById(id);
         } catch (DataAccessException e) {

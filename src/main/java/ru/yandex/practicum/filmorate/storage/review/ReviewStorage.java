@@ -72,13 +72,20 @@ public interface ReviewStorage {
     void addDislikeToReview(Long id, Long userId);
 
     /**
-     * Метод удаляет отзыв пользователя.
+     * Метод удаляет лайк или дизлайк пользователя
+     * к отзыву.
      *
      * @param id     идентификатор отзыва.
      * @param userId идентификатор пользователя,
-     *               оставившего отзыв.
+     *               удаляющего свой лайк/дизлайк.
      */
     void deleteLikeOrDislikeToReview(Long id, Long userId);
 
-    void validateReview(Long id);
+    /**
+     * Метод проверяет наличие отзыва
+     * в хранилище.
+     *
+     * @param id идентификатор отзыва.
+     */
+    void checkReviewExists(Long id);
 }

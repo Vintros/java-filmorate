@@ -95,7 +95,7 @@ public class DbDirectorStorage implements DirectorStorage {
     }
 
     @Override
-    public void validateDirector(Long id) {
+    public void checkDirectorExists(Long id) {
         try {
             getDirectorById(id);
         } catch (EmptyResultDataAccessException e) {
