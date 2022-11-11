@@ -18,31 +18,31 @@ public class DirectorService {
     private final DirectorStorage directorStorage;
 
     public List<Director> getDirectors() {
-        log.info("Запрошен список всех режиссёров");
+        log.info("A list of all directors is requested");
         return directorStorage.getDirectors();
     }
 
     public Director getDirectorById(Long id) {
         validateDirector(id);
-        log.info("Режиссёр с id: {}, запрошен", id);
+        log.info("Director with id: {}, is requested", id);
         return directorStorage.getDirectorById(id);
     }
 
     public Director addDirector(Director director) {
         validateDirectorNotExist(director);
-        log.info("Режиссёр {} добавлен в хранилище", director.getName());
+        log.info("Director {} is added to the repository", director.getName());
         return directorStorage.addDirector(director);
     }
 
     public Director updateDirector(Director director) {
         validateDirector(director.getId());
-        log.info("Режиссёр с id: {}, обновлён", director.getId());
+        log.info("Director with id: {}, is updated", director.getId());
         return directorStorage.updateDirector(director);
     }
 
     public void removeDirectorById(Long id) {
         validateDirector(id);
-        log.info("Режиссёр с id: {}, удалён", id);
+        log.info("Director with id: {}, is deleted", id);
         directorStorage.removeDirectorById(id);
     }
 }

@@ -34,13 +34,13 @@ public class Validator {
         try {
             userStorage.getUserById(id);
         } catch (DataAccessException e) {
-            throw new UnknownUserException(String.format("Пользователь с id: %d не найден", id));
+            throw new UnknownUserException(String.format("User with id: %d is not found", id));
         }
     }
 
     public static void validateUserNotExist(User user) {
         if (user.getId() != null && userStorage.getUserById(user.getId()) != null) {
-            throw new ExistsException("Пользователь уже зарегистрирован");
+            throw new ExistsException("The user has been already registered");
         }
     }
 
@@ -48,25 +48,25 @@ public class Validator {
         try {
             filmStorage.getFilmById(id);
         } catch (DataAccessException e) {
-            throw new UnknownFilmException(String.format("Фильм с id: %d не найден", id));
+            throw new UnknownFilmException(String.format("Movie with id: %d is not found", id));
         }
     }
 
     public static void validateFilmNotExist(Film film) {
         if (film.getId() != null && filmStorage.getFilmById(film.getId()) != null) {
-            throw new ExistsException("Фильм уже зарегистрирован");
+            throw new ExistsException("The movie already exists");
         }
     }
 
     public static void validateGenreId(Long id) {
         if (id < 1 || id > 6) {
-            throw new UnknownGenreException("Такой жанр не существует");
+            throw new UnknownGenreException("There is no such a genre");
         }
     }
 
     public static void validateMpaId(Long id) {
         if (id < 1 || id > 5) {
-            throw new UnknownMpaException("Такая категория не существует");
+            throw new UnknownMpaException("There is no such a category");
         }
     }
 
@@ -74,7 +74,7 @@ public class Validator {
         try {
             reviewStorage.getReviewById(id);
         } catch (DataAccessException e) {
-            throw new UnknownReviewException(String.format("Отзыв с id: %d не найден", id));
+            throw new UnknownReviewException(String.format("Review with id: %d is not found", id));
         }
     }
 
@@ -82,27 +82,27 @@ public class Validator {
         try {
             directorStorage.getDirectorById(id);
         } catch (EmptyResultDataAccessException e) {
-            throw new UnknownDirectorException(String.format("Режиссёр с id: %d не найден", id));
+            throw new UnknownDirectorException(String.format("Director with id: %d is not found", id));
         }
     }
 
     public static void validateDirectorNotExist(Director director) {
         try {
             directorStorage.getDirectorById(director.getId());
-            throw new ExistsException("Режиссёр уже существует");
+            throw new ExistsException("The director already exists");
         } catch (EmptyResultDataAccessException ignored) {
         }
     }
 
     public static void validateGenreAndYear(Integer genreId, Integer year) {
         if (year != null && year < 1895 || genreId != null && genreId <= 0) {
-            throw new RuntimeException("Неправильный запрос");
+            throw new RuntimeException("Incorrect request");
         }
     }
 
     public static void validateSearchParameter(String by) {
         if (!by.equals("title") && !by.equals("director") && !by.equals("title,director") && !by.equals("director,title")) {
-            throw new IncorrectSearchParameterException("Введен некорректный параметр поиска. Доступные значения: " +
+            throw new IncorrectSearchParameterException("An incorrect search parameter has been entered. Available values: " +
                     "title; director, title,director; director,title");
         }
     }

@@ -20,10 +20,10 @@ public class Film {
 
     private Long id;
     @NonNull
-    @NotBlank(message = "Пустое поле названия фильма")
+    @NotBlank(message = "Empty movie title field")
     private String name;
     @NonNull
-    @Size(max = 200, message = "Описание должно быть не более 200 символов")
+    @Size(max = 200, message = "The description should contain no more than 200 characters")
     private String description;
     @NonNull
     @AfterCinemaBirthday
