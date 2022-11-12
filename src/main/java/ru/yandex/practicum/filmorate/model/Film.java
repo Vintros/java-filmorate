@@ -15,30 +15,33 @@ import java.util.TreeSet;
 @AllArgsConstructor
 @NoArgsConstructor
 @RequiredArgsConstructor
-@EqualsAndHashCode(exclude = {"mpa", "genres", "usersIdLiked"})
+@EqualsAndHashCode(exclude = {"mpa", "genres"})
 public class Film {
 
     private Long id;
+
     @NonNull
-    @NotBlank(message = "Empty film title field")
+    @NotBlank(message = "Пустое поле названия фильма")
     private String name;
+
     @NonNull
-    @Size(max = 200, message = "The description should contain no more than 200 characters")
+    @Size(max = 200, message = "Описание должно быть не более 200 символов")
     private String description;
+
     @NonNull
     @AfterCinemaBirthday
     private Date releaseDate;
+
     @NonNull
     @Positive
     private Long duration;
+
+    private Long rate;
+
     @NonNull
     private Mpa mpa;
-    private final Set<Genre> genres = new TreeSet<>(Comparator.comparingLong(Genre::getId));
-    private final Set<Director> directors = new HashSet<>();
-    @JsonIgnore
-    private final Set<Long> usersIdLiked = new HashSet<>();
 
-    public int getRate() {
-        return usersIdLiked.size();
-    }
+    private final Set<Genre> genres = new TreeSet<>(Comparator.comparingLong(Genre::getId));
+
+    private final Set<Director> directors = new HashSet<>();
 }

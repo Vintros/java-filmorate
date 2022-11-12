@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.ExistsException;
 import ru.yandex.practicum.filmorate.exception.UnknownUserException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Event;
@@ -16,10 +15,8 @@ import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static ru.yandex.practicum.filmorate.validator.Validator.*;
 
@@ -35,124 +32,170 @@ public class FilmService {
     private final UserStorage userStorage;
 
     public void addLikeFilm(Long id, Long userId) {
-        filmStorage.checkFilmExistsById(id);
         userStorage.checkUserExistsById(userId);
-        Film film = filmStorage.getFilmById(id);
-        if (film.getUsersIdLiked().contains(userId)) {
-            throw new ExistsException(String.format("A user with id: %d has already liked a film with id: %d",
-                    userId, id));
-        }
+        filmStorage.checkFilmExistsById(id);
+        filmStorage.checkUserLikeToFilmNotExist(id, userId);
+
         filmStorage.addLikeFilm(id, userId);
         feedStorage.saveUserEvent(new Event(userId, id, "LIKE", "ADD", new Date()));
-        log.debug("User with id: {} has liked the film with id: {}", userId, id);
+        log.debug("Пользователь с id: {} поставил лайк фильму с id: {}", userId, id);
     }
 
     public void removeLikeFilm(Long id, Long userId) {
         filmStorage.checkFilmExistsById(id);
         userStorage.checkUserExistsById(userId);
+
         try {
             filmStorage.removeLikeFilm(id, userId);
         } catch (DataAccessException e) {
-            throw new UnknownUserException(String.format("The user with id: %d has not liked the film with id: %d",
+            throw new UnknownUserException(String.format("Пользователь с id: %d не ставил лайк фильму с id: %d",
                     userId, id));
         }
         feedStorage.saveUserEvent(new Event(userId, id, "LIKE", "REMOVE", new Date()));
-        log.debug("A user with id: {} removed a film like with id: {}", userId, id);
+        log.debug("Пользователь с id: {} удалил лайк фильма с id: {}", userId, id);
     }
 
     public List<Film> getListPopularFilm(Integer count, Integer genreId, Integer year) {
         validateGenreAndYear(genreId, year);
+
         List<Film> films;
         if (genreId != null && year != null) {
-            log.info("{} popular films by genre #{} and {} year is/are requested", count, genreId, year);
+            log.info("Запрошено {} популярных фильмов по жанру №{} и {} году", count, genreId, year);
             films = filmStorage.findPopularFilmSortedByGenreAndYear(count, genreId, year);
         } else if (genreId != null) {
-            log.info("{} popular films by genre No.{} is/are requested", count, genreId);
+            log.info("Запрошено {} популярных фильмов по жанру №{}", count, genreId);
             films = filmStorage.getListPopularFilmSortedByGenre(count, genreId);
         } else if (year != null) {
-            log.info("{} popular films by {} year is/are requested", count, year);
+            log.info("Запрошено {} популярных фильмов по {} году", count, year);
             films = filmStorage.getListPopularFilmSortedByYear(count, year);
         } else {
-            log.info("{} popular films is/are requested", count);
+            log.info("Запрошено {} популярных фильмов", count);
             films = filmStorage.getListPopularFilm(count);
         }
-        return addFilmsGenres(films);
+        return populateFilmsWithGenresAndDirectors(films);
     }
 
     public Film addFilm(Film film) {
         if (film.getId() != null) {
             filmStorage.checkFilmNotExistById(film.getId());
         }
-        log.info("Film - {} is added to collection", film.getName());
-        return filmStorage.addFilm(film);
+
+        Film addedFilm = filmStorage.addFilm(film);
+        log.info("Фильм {} добавлен в коллекцию", film.getName());
+        return populateFilmWithGenresAndDirectors(addedFilm);
     }
 
     public Film updateFilm(Film film) {
         filmStorage.checkFilmExistsById(film.getId());
-        log.info("The film - {} has been updated", film.getName());
-        return filmStorage.updateFilm(film);
+
+        Film updatedFilm = filmStorage.updateFilm(film);
+        return populateFilmWithGenresAndDirectors(updatedFilm);
     }
 
     public List<Film> getFilms() {
-        log.info("A list of all films is requested");
-        List<Film> films = filmStorage.getFilmsWithoutGenres();
+        List<Film> films = filmStorage.getFilmsWithoutGenresAndDirectors();
+        log.info("Запрошен список всех фильмов");
         return populateFilmsWithGenresAndDirectors(films);
     }
 
     public Film getFilmById(Long id) {
         filmStorage.checkFilmExistsById(id);
-        log.info("Film with id: {} is requested", id);
-        return filmStorage.getFilmById(id);
+
+        Film film = filmStorage.getFilmByIdWithoutGenresAndDirectors(id);
+        log.info("Фильм с id: {}, запрошен", id);
+        return populateFilmWithGenresAndDirectors(film);
     }
 
     public void removeFilmById(Long id) {
         filmStorage.checkFilmExistsById(id);
-        log.info("Film with id: {} is removed from collection", id);
+
         filmStorage.removeFilmById(id);
+        log.info("Фильм с id: {}, удалён из коллекции", id);
     }
 
     public List<Film> getFilmsByDirector(Long directorId, String sortBy) {
         directorStorage.checkDirectorExistsById(directorId);
-        return filmStorage.getFilmsByDirector(directorId, sortBy);
-    }
+        log.info("Запрошен список фильмов по режиссеру с id: {}, с сортировкой по {}", directorId, sortBy);
 
-    public List<Film> searchFilmsByTitleOrDirector(String query, String searchBy) {
-        log.info("Search query is received: {}. Search parameter: {}", query, searchBy);
-        validateSearchParameter(searchBy);
-        List<Film> films;
-        switch (searchBy) {
-            case "title":
-                films = filmStorage.searchFilmsWithoutGenresAndDirectorsByTitle(query);
-                break;
-            case "director":
-                films = filmStorage.searchFilmsWithoutGenresAndDirectorsByDirector(query);
-                break;
-            case "title,director":
-            case "director,title":
-                films = filmStorage.searchFilmsWithoutGenresAndDirectorsByTitleAndDirector(query);
-                break;
-            default:
-                films = new ArrayList<>();
-        }
-        return populateFilmsWithGenresAndDirectors(films);
-    }
-
-    public List<Film> getCommonFilms(Long userId, Long friendId) {
-        userStorage.checkUserExistsById(userId);
-        userStorage.checkUserExistsById(friendId);
-        log.info("A list of shared films of users with id: {} and {} is requested", userId, friendId);
-        List<Film> films = filmStorage.getCommonFilms(userId, friendId);
-        return populateFilmsWithGenresAndDirectors(films);
-    }
-
-    private List<Film> addFilmsGenres(List<Film> films) {
+        List<Film> films = filmStorage.getFilmsByDirectorWithoutGenresAndDirectors(directorId, sortBy);
         Map<Long, List<Genre>> genresByFilmsId = genreStorage.getGenresByFilmsId();
+        Map<Long, List<Director>> directorsByFilmsId = directorStorage.getDirectorsByFilmsId();
         for (Film film : films) {
             if (genresByFilmsId.get(film.getId()) != null) {
                 film.getGenres().addAll(genresByFilmsId.get(film.getId()));
             }
+            if (directorsByFilmsId.get(film.getId()) != null) {
+                film.getDirectors().addAll(directorsByFilmsId.get(film.getId()));
+            }
         }
         return films;
+    }
+
+    public List<Film> searchFilmsByTitleOrDirector(String query, String searchBy) {
+        log.info("Получен поисковый запрос: {}. Параметр поиска: {}", query, searchBy);
+        validateSearchParameter(searchBy);
+
+        List<Map.Entry<Long, String>> dataList = new ArrayList<>();
+        switch (searchBy) {
+            case "title":
+                dataList.addAll(filmStorage.searchFilmsWithoutGenresAndDirectorsByTitle(query));
+                break;
+            case "director":
+                dataList.addAll(filmStorage.searchFilmsWithoutGenresAndDirectorsByDirector(query));
+                break;
+            case "title,director":
+            case "director,title":
+                dataList.addAll(filmStorage.searchFilmsWithoutGenresAndDirectorsByTitle(query));
+                dataList.addAll(filmStorage.searchFilmsWithoutGenresAndDirectorsByDirector(query));
+                break;
+        }
+        List<Long> matchingIds = getMatchingIds(query, dataList);
+        List<Film> films = filmStorage.getFilmsSortedByPopularity(matchingIds);
+
+        return populateFilmsWithGenresAndDirectors(films);
+    }
+
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
+        log.info("Запрошен список общих фильмов пользователей с id: {} и {}", userId, friendId);
+        userStorage.checkUserExistsById(userId);
+        userStorage.checkUserExistsById(friendId);
+
+
+        List<Film> films = filmStorage.getCommonFilms(userId, friendId);
+        return populateFilmsWithGenresAndDirectors(films);
+    }
+
+    public List<Film> getRecommendedFilms(Long id) {
+        userStorage.checkUserExistsById(id);
+
+        List<Film> films = new ArrayList<>();
+
+        List<Map.Entry<Long, Long>> entriesUserIdLikedFilmId = filmStorage.getEntriesUserIdLikedFilmId(id);
+        if (entriesUserIdLikedFilmId.isEmpty()) {
+            return films;
+        }
+        Map<Long, ArrayList<Long>> usersIdWithLikedFilmsId = getUsersIdWithLikedFilmsId(entriesUserIdLikedFilmId);
+        Long mostIntersectionsUserId = getMostIntersectionsUserId(id, usersIdWithLikedFilmsId);
+        if (mostIntersectionsUserId == null) {
+            return films;
+        }
+        List<Long> filmsId = new ArrayList<>();
+        for (Long filmId : usersIdWithLikedFilmsId.get(mostIntersectionsUserId)) {
+            if (!usersIdWithLikedFilmsId.get(id).contains(filmId)) {
+                filmsId.add(filmId);
+            }
+        }
+        films.addAll(filmStorage.getFilmsSortedByPopularity(filmsId));
+        log.info("Пользователем с id - {} запрошен список рекомендованных фильмов", id);
+        return populateFilmsWithGenresAndDirectors(films);
+    }
+
+    private Film populateFilmWithGenresAndDirectors(Film film) {
+        List<Genre> genres = genreStorage.getGenresByFilmId(film.getId());
+        film.getGenres().addAll(genres);
+        List<Director> directors = directorStorage.getDirectorsByFilmId(film.getId());
+        film.getDirectors().addAll(directors);
+        return film;
     }
 
     private List<Film> populateFilmsWithGenresAndDirectors(List<Film> films) {
@@ -167,5 +210,51 @@ public class FilmService {
             }
         }
         return films;
+    }
+
+    private List<Long> getMatchingIds(String query, List<Map.Entry<Long, String>> dataList) {
+        List<Long> matchingIds = new ArrayList<>();
+        for (Map.Entry<Long, String> entry : dataList) {
+            if (entry.getValue().toLowerCase().contains(query.toLowerCase())) {
+                matchingIds.add(entry.getKey());
+            }
+        }
+        return matchingIds.stream()
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    private Long getMostIntersectionsUserId(Long requestedUserId, Map<Long, ArrayList<Long>> usersIdWithLikedFilmsId) {
+        Map<Long, Long> frequency = new HashMap<>();
+
+        for (Map.Entry<Long, ArrayList<Long>> userIdWithLikedFilmsId : usersIdWithLikedFilmsId.entrySet()) {
+            if (!userIdWithLikedFilmsId.getKey().equals(requestedUserId)) {
+                Long intersectionsCount = usersIdWithLikedFilmsId.get(requestedUserId)
+                        .stream()
+                        .filter((userIdWithLikedFilmsId.getValue()::contains))
+                        .count();
+                frequency.put(userIdWithLikedFilmsId.getKey(), intersectionsCount);
+            }
+        }
+        Optional<Map.Entry<Long, Long>> mostIntersectionsUser = frequency.entrySet()
+                .stream()
+                .max(Map.Entry.comparingByValue());
+
+        return mostIntersectionsUser.map(Map.Entry::getKey).orElse(null);
+    }
+
+    private Map<Long, ArrayList<Long>> getUsersIdWithLikedFilmsId(List<Map.Entry<Long, Long>> entriesUserIdLikedFilmId) {
+        Map<Long, ArrayList<Long>> usersIdWithLikedFilmsId = new HashMap<>();
+        for (Map.Entry<Long, Long> entryUserIdLikedFilmsId : entriesUserIdLikedFilmId) {
+            Long userId = entryUserIdLikedFilmsId.getKey();
+            if (usersIdWithLikedFilmsId.containsKey(userId)) {
+                Long filmId = entryUserIdLikedFilmsId.getValue();
+                usersIdWithLikedFilmsId.get(userId).add(filmId);
+            } else {
+                usersIdWithLikedFilmsId.put(userId,
+                        new ArrayList<>(Collections.singletonList(entryUserIdLikedFilmsId.getValue())));
+            }
+        }
+        return usersIdWithLikedFilmsId;
     }
 }

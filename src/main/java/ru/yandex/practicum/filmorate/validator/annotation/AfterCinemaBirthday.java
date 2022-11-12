@@ -12,7 +12,7 @@ import java.lang.annotation.*;
 @Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface AfterCinemaBirthday {
-    String message() default "The release date of the film cannot be set earlier than 28.12.1895";
+    String message() default "Дата фильма не может быть раньше 28.12.1895";
 
     Class<?>[] groups() default {};
 

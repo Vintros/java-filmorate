@@ -126,7 +126,7 @@ public class DbUserStorage implements UserStorage {
         try {
             getUserById(id);
         } catch (DataAccessException e) {
-            throw new UnknownUserException(String.format("User with id: %d is not found", id));
+            throw new UnknownUserException(String.format("Пользователь с id: %d не найден", id));
         }
     }
 
@@ -138,7 +138,7 @@ public class DbUserStorage implements UserStorage {
                 "   FROM users " +
                 "   WHERE user_id = ?)";
         jdbcTemplate.query(sqlQuery, (rs) -> {
-            if (rs.getBoolean(1)) throw new ExistsException("The user has been already registered");
+            if (rs.getBoolean(1)) throw new ExistsException("Пользователь уже зарегистрирован");
         }, id);
     }
 

@@ -2,7 +2,7 @@ package ru.yandex.practicum.filmorate.exception;
 
 public class UnknownGenreException extends UnknownEntityException {
 
-    public UnknownGenreException(String message, Long id) {
+    public UnknownGenreException(String message) {
         super(message);
     }
 }

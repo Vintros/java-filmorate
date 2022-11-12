@@ -29,13 +29,13 @@ public class ReviewService {
         Review createdReview = reviewStorage.addReview(review);
         feedStorage.saveUserEvent(new Event(createdReview.getUserId(), createdReview.getReviewId(), "REVIEW", "ADD",
                 new Date()));
-        log.info("A review with id: {} is added to the movie with id: {}", createdReview.getReviewId(), createdReview.getFilmId());
+        log.info("добавлен отзыв с id: {}, к фильму с id: {}", createdReview.getReviewId(), createdReview.getFilmId());
         return createdReview;
     }
 
     public Review getReviewById(Long id) {
         reviewStorage.checkReviewExistsById(id);
-        log.info("Review with id: {} is requested", id);
+        log.info("запрошен отзыв с id: {}", id);
         return reviewStorage.getReviewById(id);
     }
 
@@ -44,19 +44,19 @@ public class ReviewService {
         reviewStorage.deleteReviewById(id);
         feedStorage.saveUserEvent(new Event(ReviewToDelete.getUserId(), ReviewToDelete.getReviewId(), "REVIEW", "REMOVE",
                 new Date()));
-        log.info("Review with id: {} is deleted", id);
+        log.info("удален отзыв с id: {}", id);
     }
 
     public Review updateReviewById(Review review) {
         Review updatedReview = reviewStorage.updateReviewById(review);
         feedStorage.saveUserEvent(new Event(updatedReview.getUserId(), updatedReview.getReviewId(), "REVIEW", "UPDATE",
                 new Date()));
-        log.info("Review with id: {} is updated", review.getReviewId());
+        log.info("обновлен отзыв с id: {}", review.getReviewId());
         return updatedReview;
     }
 
     public List<Review> getReviewsByFilmIdOrAll(Long filmId, Long count) {
-        log.info("A list of reviews is requested");
+        log.info("запрошен список отзывов");
         return reviewStorage.getReviewsByFilmIdOrAll(filmId, count);
     }
 
@@ -64,20 +64,20 @@ public class ReviewService {
         reviewStorage.checkReviewExistsById(id);
         userStorage.checkUserExistsById(userId);
         reviewStorage.addLikeToReview(id, userId);
-        log.info("User with id: {} liked the review with id: {}", userId, id);
+        log.info("пользователь с id: {} поставил лайк отзыву с id: {}", userId, id);
     }
 
     public void addDislikeToReview(Long id, Long userId) {
         reviewStorage.checkReviewExistsById(id);
         userStorage.checkUserExistsById(userId);
         reviewStorage.addDislikeToReview(id, userId);
-        log.info("User with id: {} disliked the review with id: {}", userId, id);
+        log.info("пользователь с id: {} поставил дизлайк отзыву с id: {}", userId, id);
     }
 
     public void deleteLikeOrDislikeToReview(Long id, Long userId) {
         reviewStorage.checkReviewExistsById(id);
         userStorage.checkUserExistsById(userId);
         reviewStorage.deleteLikeOrDislikeToReview(id, userId);
-        log.info("User with id: {} deleted the review rating with id: {}", userId, id);
+        log.info("пользователь с id: {} поставил оценку отзыва с id: {}", userId, id);
     }
 }

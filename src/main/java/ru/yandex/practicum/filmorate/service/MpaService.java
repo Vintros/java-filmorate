@@ -18,13 +18,13 @@ public class MpaService {
     private final MpaStorage mpaStorage;
 
     public List<Mpa> getAllMpa() {
-        log.info("All MPAs are requested");
+        log.info("Запрошены все рейтинги");
         return mpaStorage.getAllMpa();
     }
 
     public Mpa getMpaById(Long id) {
         validateMpaId(id);
-        log.info("The MPA with id: {} is requested", id);
+        log.info("Запрошен рейтинг с id: {}", id);
         return mpaStorage.getMpaById(id);
     }
 }

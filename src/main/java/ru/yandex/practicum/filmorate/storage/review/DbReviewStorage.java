@@ -135,7 +135,7 @@ public class DbReviewStorage implements ReviewStorage {
         try {
             getReviewById(id);
         } catch (DataAccessException e) {
-            throw new UnknownReviewException(String.format("Review with id: %d is not found", id));
+            throw new UnknownReviewException(String.format("Отзыв с id: %d не найден", id));
         }
     }
 

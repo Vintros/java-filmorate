@@ -18,14 +18,14 @@ public class User {
 
     private Long id;
     private String name;
-    @Email(message = "Incorrect email")
+    @Email(message = "Некорректная почта")
     @NonNull
     private String email;
     @NonNull
-    @Pattern(regexp = "\\A\\S+\\Z", message = "Validation error, empty login or whitespace characters in the user login")
+    @Pattern(regexp = "\\A\\S+\\Z", message = "Ошибка валидации, пустой логин или пробельные символы в логине пользователя")
     private String login;
     @NonNull
-    @PastOrPresent(message = "Incorrect date of birth")
+    @PastOrPresent(message = "Некорректная дата рождения")
     private Date birthday;
     private final Set<User> friends = new HashSet<>();
 }
