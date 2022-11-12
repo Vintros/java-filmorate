@@ -76,25 +76,13 @@ public interface FilmStorage {
     List<Film> getFilmsByDirectorWithoutGenresAndDirectors(Long directorId, String sortBy);
 
     /**
-     * Метод возвращает список рекомендованных
-     * фильмов по идентификатору пользователя.
-     * Рекомендация определяется по следующему
-     * алгоритму:
-     * <ol>
-     *   <li>
-     *     Находится пользователь с максимально похожим
-     *     вкусом.
-     *   </li>
-     *   <li>
-     *     У найденного пользователя определяются фильмы,
-     *     которые ещё не смотрел первый пользователь
-     *   </li>
-     * </ol>
+     * Метод возвращает список всех пар id пользователя и
+     * id фильма, которому пользователь поставил лайк
      *
-     * @param id идентификатор пользователя.
-     * @return Список рекомендованных фильмов.
+     * @return Список пар id пользователя и
+     * id фильма, которому пользователь поставил лайк
      */
-    List<Map.Entry<Long, Long>> getEntriesUserIdLikedFilmId(Long id); // todo исправить описание
+    List<Map.Entry<Long, Long>> getEntriesUserIdLikedFilmId();
 
     /**
      * Метод возвращает список популярных
@@ -199,5 +187,13 @@ public interface FilmStorage {
      */
     void checkUserLikeToFilmNotExist(Long id, Long userId);
 
-    List<Film> getFilmsSortedByPopularity(List<Long> matchingIds);
+    /**
+     * Метод возвращает список фильмов.
+     *
+     * @param matchingIds список id
+     *                    запрошенных фильмов.
+     * @return Список фильмов по
+     * запрошенным id.
+     */
+    List<Film> getFilmsSortedByPopularity(List<Long> matchingIds); //todo
 }

@@ -38,7 +38,7 @@ public class FilmService {
 
         filmStorage.addLikeFilm(id, userId);
         feedStorage.saveUserEvent(new Event(userId, id, "LIKE", "ADD", new Date()));
-        log.debug("Пользователь с id: {} поставил лайк фильму с id: {}", userId, id);
+        log.debug("User with id: {} has liked the film with id: {}", userId, id);
     }
 
     public void removeLikeFilm(Long id, Long userId) {
@@ -48,11 +48,11 @@ public class FilmService {
         try {
             filmStorage.removeLikeFilm(id, userId);
         } catch (DataAccessException e) {
-            throw new UnknownUserException(String.format("Пользователь с id: %d не ставил лайк фильму с id: %d",
+            throw new UnknownUserException(String.format("The user with id: %d has not liked the film with id: %d",
                     userId, id));
         }
         feedStorage.saveUserEvent(new Event(userId, id, "LIKE", "REMOVE", new Date()));
-        log.debug("Пользователь с id: {} удалил лайк фильма с id: {}", userId, id);
+        log.debug("A user with id: {} removed a film like with id: {}", userId, id);
     }
 
     public List<Film> getListPopularFilm(Integer count, Integer genreId, Integer year) {
@@ -60,16 +60,16 @@ public class FilmService {
 
         List<Film> films;
         if (genreId != null && year != null) {
-            log.info("Запрошено {} популярных фильмов по жанру №{} и {} году", count, genreId, year);
+            log.info("{} popular films by genre #{} and {} year is/are requested", count, genreId, year);
             films = filmStorage.findPopularFilmSortedByGenreAndYear(count, genreId, year);
         } else if (genreId != null) {
-            log.info("Запрошено {} популярных фильмов по жанру №{}", count, genreId);
+            log.info("{} popular films by genre No.{} is/are requested", count, genreId);
             films = filmStorage.getListPopularFilmSortedByGenre(count, genreId);
         } else if (year != null) {
-            log.info("Запрошено {} популярных фильмов по {} году", count, year);
+            log.info("{} popular films by {} year is/are requested", count, year);
             films = filmStorage.getListPopularFilmSortedByYear(count, year);
         } else {
-            log.info("Запрошено {} популярных фильмов", count);
+            log.info("{} popular films is/are requested", count);
             films = filmStorage.getListPopularFilm(count);
         }
         return populateFilmsWithGenresAndDirectors(films);
@@ -81,7 +81,7 @@ public class FilmService {
         }
 
         Film addedFilm = filmStorage.addFilm(film);
-        log.info("Фильм {} добавлен в коллекцию", film.getName());
+        log.info("Film - {} is added to collection", film.getName());
         return populateFilmWithGenresAndDirectors(addedFilm);
     }
 
@@ -89,12 +89,13 @@ public class FilmService {
         filmStorage.checkFilmExistsById(film.getId());
 
         Film updatedFilm = filmStorage.updateFilm(film);
+        log.info("The film - {} has been updated", updatedFilm.getName());
         return populateFilmWithGenresAndDirectors(updatedFilm);
     }
 
     public List<Film> getFilms() {
         List<Film> films = filmStorage.getFilmsWithoutGenresAndDirectors();
-        log.info("Запрошен список всех фильмов");
+        log.info("A list of all films is requested");
         return populateFilmsWithGenresAndDirectors(films);
     }
 
@@ -102,7 +103,7 @@ public class FilmService {
         filmStorage.checkFilmExistsById(id);
 
         Film film = filmStorage.getFilmByIdWithoutGenresAndDirectors(id);
-        log.info("Фильм с id: {}, запрошен", id);
+        log.info("Film with id: {} is requested", id);
         return populateFilmWithGenresAndDirectors(film);
     }
 
@@ -110,12 +111,12 @@ public class FilmService {
         filmStorage.checkFilmExistsById(id);
 
         filmStorage.removeFilmById(id);
-        log.info("Фильм с id: {}, удалён из коллекции", id);
+        log.info("Film with id: {} is removed from collection", id);
     }
 
     public List<Film> getFilmsByDirector(Long directorId, String sortBy) {
         directorStorage.checkDirectorExistsById(directorId);
-        log.info("Запрошен список фильмов по режиссеру с id: {}, с сортировкой по {}", directorId, sortBy);
+        log.info("A list of films by director with id: {}, sorted by: {}", directorId, sortBy);
 
         List<Film> films = filmStorage.getFilmsByDirectorWithoutGenresAndDirectors(directorId, sortBy);
         Map<Long, List<Genre>> genresByFilmsId = genreStorage.getGenresByFilmsId();
@@ -132,7 +133,7 @@ public class FilmService {
     }
 
     public List<Film> searchFilmsByTitleOrDirector(String query, String searchBy) {
-        log.info("Получен поисковый запрос: {}. Параметр поиска: {}", query, searchBy);
+        log.info("Search query is received: {}. Search parameter: {}", query, searchBy);
         validateSearchParameter(searchBy);
 
         List<Map.Entry<Long, String>> dataList = new ArrayList<>();
@@ -156,7 +157,7 @@ public class FilmService {
     }
 
     public List<Film> getCommonFilms(Long userId, Long friendId) {
-        log.info("Запрошен список общих фильмов пользователей с id: {} и {}", userId, friendId);
+        log.info("A list of shared films of users with id: {} and {} is requested", userId, friendId);
         userStorage.checkUserExistsById(userId);
         userStorage.checkUserExistsById(friendId);
 
@@ -170,7 +171,7 @@ public class FilmService {
 
         List<Film> films = new ArrayList<>();
 
-        List<Map.Entry<Long, Long>> entriesUserIdLikedFilmId = filmStorage.getEntriesUserIdLikedFilmId(id);
+        List<Map.Entry<Long, Long>> entriesUserIdLikedFilmId = filmStorage.getEntriesUserIdLikedFilmId();
         if (entriesUserIdLikedFilmId.isEmpty()) {
             return films;
         }
@@ -186,7 +187,7 @@ public class FilmService {
             }
         }
         films.addAll(filmStorage.getFilmsSortedByPopularity(filmsId));
-        log.info("Пользователем с id - {} запрошен список рекомендованных фильмов", id);
+        log.info("A user with id: {} requested a list of recommended films", id);
         return populateFilmsWithGenresAndDirectors(films);
     }
 

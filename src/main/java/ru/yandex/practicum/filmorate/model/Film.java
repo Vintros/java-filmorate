@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import ru.yandex.practicum.filmorate.validator.annotation.AfterCinemaBirthday;
 
@@ -21,11 +20,11 @@ public class Film {
     private Long id;
 
     @NonNull
-    @NotBlank(message = "Пустое поле названия фильма")
+    @NotBlank(message = "Empty film title field")
     private String name;
 
     @NonNull
-    @Size(max = 200, message = "Описание должно быть не более 200 символов")
+    @Size(max = 200, message = "The description should contain no more than 200 characters")
     private String description;
 
     @NonNull

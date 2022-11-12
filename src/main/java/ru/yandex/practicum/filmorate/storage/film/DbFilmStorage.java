@@ -146,7 +146,7 @@ public class DbFilmStorage implements FilmStorage {
     }
 
     @Override
-    public List<Map.Entry<Long, Long>> getEntriesUserIdLikedFilmId(Long id) {
+    public List<Map.Entry<Long, Long>> getEntriesUserIdLikedFilmId() {
         final String sqlQuery = "" +
                 "SELECT user_id, film_id " +
                 "FROM likes " +
@@ -263,7 +263,7 @@ public class DbFilmStorage implements FilmStorage {
                 "   FROM films " +
                 "   WHERE film_id = ?)";
         jdbcTemplate.query(sqlQuery, (rs) -> {
-            if (!rs.getBoolean(1)) throw new UnknownFilmException(String.format("Фильм с id: %d не найден", id));
+            if (!rs.getBoolean(1)) throw new UnknownFilmException(String.format("Film with id: %d is not found", id));
         }, id);
     }
 
@@ -275,7 +275,7 @@ public class DbFilmStorage implements FilmStorage {
                 "   FROM films " +
                 "   WHERE film_id = ?)";
         jdbcTemplate.query(sqlQuery, (rs) -> {
-            if (rs.getBoolean(1)) throw new ExistsException("Фильм уже зарегистрирован");
+            if (rs.getBoolean(1)) throw new ExistsException("The film already exists");
         }, id);
     }
 
@@ -288,8 +288,10 @@ public class DbFilmStorage implements FilmStorage {
                 "   WHERE user_id = ? " +
                 "     AND film_id = ?)";
         jdbcTemplate.query(sqlQuery, (rs) -> {
-            if (rs.getBoolean(1)) throw new ExistsException(String.format(
-                    "Пользователь с id: %d уже поставил лайк фильму с id: %d", userId, id));
+            if (rs.getBoolean(1)) {
+                throw new ExistsException(String.format("A user with id: %d has already liked a film with id: %d",
+                        userId, id));
+            }
         }, userId, id);
     }
 
