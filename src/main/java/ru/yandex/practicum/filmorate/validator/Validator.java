@@ -8,13 +8,13 @@ public class Validator {
 
     public static void validateGenreId(Long id) {
         if (id < 1 || id > 6) {
-            throw new UnknownGenreException("Genre with id: %d does not exist", id);
+            throw new UnknownGenreException("Genre with id: %d does not exist");
         }
     }
 
     public static void validateMpaId(Long id) {
         if (id < 1 || id > 5) {
-            throw new UnknownMpaException("MPA with id: %d does not exist", id);
+            throw new UnknownMpaException("MPA with id: %d does not exist");
         }
     }
 

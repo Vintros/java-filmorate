@@ -17,15 +17,20 @@ import java.util.Set;
 public class User {
 
     private Long id;
+
     private String name;
+
     @Email(message = "Incorrect email")
     @NonNull
     private String email;
+
     @NonNull
     @Pattern(regexp = "\\A\\S+\\Z", message = "Validation error, empty login or whitespace characters in the user login")
     private String login;
+
     @NonNull
     @PastOrPresent(message = "Incorrect date of birth")
     private Date birthday;
+
     private final Set<User> friends = new HashSet<>();
 }

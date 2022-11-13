@@ -5,10 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ExistsException;
 import ru.yandex.practicum.filmorate.model.Event;
-import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.feed.FeedStorage;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.ArrayList;
@@ -21,7 +19,6 @@ import java.util.List;
 public class UserService {
 
     private final UserStorage userStorage;
-    private final FilmStorage filmStorage;
     private final FeedStorage feedStorage;
 
     public void addFriend(Long id, Long friendId) {
@@ -30,7 +27,8 @@ public class UserService {
         User firstUser = userStorage.getUserById(id);
         User secondUser = userStorage.getUserById(friendId);
         if (firstUser.getFriends().contains(secondUser)) {
-            throw new ExistsException(String.format("User with id: %d has already made user with id: %d his friend", id, friendId));
+            throw new ExistsException(String.format(
+                    "User with id: %d has already made user with id: %d his friend", id, friendId));
         }
         userStorage.addFriend(id, friendId);
         feedStorage.saveUserEvent(new Event(id, friendId, "FRIEND", "ADD",  new Date()));
@@ -43,7 +41,8 @@ public class UserService {
         User firstUser = userStorage.getUserById(id);
         User secondUser = userStorage.getUserById(friendId);
         if (!firstUser.getFriends().contains(secondUser)) {
-            throw new ExistsException(String.format("A user with id: %d is not friends with user with id: %d", id, friendId));
+            throw new ExistsException(String.format(
+                    "A user with id: %d is not friends with user with id: %d", id, friendId));
         }
         userStorage.removeFriend(id, friendId);
         feedStorage.saveUserEvent(new Event(id, friendId, "FRIEND", "REMOVE",  new Date()));
@@ -97,14 +96,9 @@ public class UserService {
         userStorage.removeUserById(id);
     }
 
-    public List<Film> getRecommendations(Long id) {
-        userStorage.checkUserExistsById(id);
-        log.info("A user with id: {} requested a list of recommended films", id);
-        return filmStorage.getRecommendations(id);
-    }
-
     public List<Event> getFeed(Long id) {
         userStorage.checkUserExistsById(id);
+        log.info("Requested event feed of a user with id: {}", id);
         return feedStorage.getFeed(id);
     }
 

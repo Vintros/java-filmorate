@@ -90,7 +90,8 @@ public class DbDirectorStorage implements DirectorStorage {
                 "WHERE director_id IN " +
                 "   (SELECT director_id " +
                 "    FROM directors " +
-                "    WHERE film_id = ?)";
+                "    WHERE film_id = ?) " +
+                "ORDER BY director_id";
         return jdbcTemplate.query(sqlQuery, new DirectorMapper(), id);
     }
 

@@ -90,7 +90,7 @@ class FilmControllerTest {
                 .andExpect(jsonPath("$.duration").value(200));
 
         Film newFilm = new Film(1L, "Name", "Description Film", Date.valueOf(LocalDate.of( 2000, 1, 1)),
-                200L, new Mpa(1L, null));
+                200L, 0L, new Mpa(1L, null));
 
         mockMvc.perform(post("/films")
                         .content(objectMapper.writeValueAsString(newFilm))

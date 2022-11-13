@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
-import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -11,26 +10,19 @@ import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
-import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
-import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Repository
 public class DbFilmStorage implements FilmStorage {
 
     private final JdbcTemplate jdbcTemplate;
-    private final GenreStorage genreStorage;
-    private final DirectorStorage directorStorage;
 
-    public DbFilmStorage(JdbcTemplate jdbcTemplate, GenreStorage genreStorage, DirectorStorage directorStorage) {
+    public DbFilmStorage(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
-        this.genreStorage = genreStorage;
-        this.directorStorage = directorStorage;
     }
 
     @Override
@@ -54,7 +46,7 @@ public class DbFilmStorage implements FilmStorage {
         if (!film.getDirectors().isEmpty()) {
             addDirectors(film.getDirectors(), (long) keyHolder.getKey());
         }
-        return getFilmById((long) keyHolder.getKey());
+        return getFilmByIdWithoutGenresAndDirectors((long) keyHolder.getKey());
     }
 
     @Override
@@ -81,7 +73,7 @@ public class DbFilmStorage implements FilmStorage {
         });
         addGenres(film.getGenres(), film.getId());
         addDirectors(film.getDirectors(), film.getId());
-        return getFilmById(film.getId());
+        return getFilmByIdWithoutGenresAndDirectors(film.getId());
     }
 
     @Override
@@ -101,24 +93,27 @@ public class DbFilmStorage implements FilmStorage {
     }
 
     @Override
-    public List<Film> getFilmsWithoutGenres() {
+    public List<Film> getFilmsWithoutGenresAndDirectors() {
         String sqlQuery = "" +
-                "SELECT film_id, films.name, description, release_date, duration, films.mpa_id, mpa.name " +
-                "FROM films " +
-                "LEFT JOIN mpa ON films.mpa_id = mpa.mpa_id";
+                "SELECT f.film_id, f.name, f.description, f.release_date, f.duration, f.mpa_id, mpa.name, " +
+                "       COUNT (l.user_id) rate " +
+                "FROM films f " +
+                "LEFT JOIN likes l on f.film_id = l.film_id " +
+                "LEFT JOIN mpa ON f.mpa_id = mpa.mpa_id " +
+                "GROUP BY f.film_id";
         return jdbcTemplate.query(sqlQuery, this::mapRowToFilm);
     }
 
     @Override
-    public Film getFilmById(Long id) {
-        Film film = getFilmByIdWithoutGenres(id);
-        List<Genre> genres = genreStorage.getGenresByFilmId(id);
-        genres.sort((o1, o2) -> (int) (o1.getId() - o2.getId()));
-        film.getGenres().addAll(genres);
-        List<Director> directors = directorStorage.getDirectorsByFilmId(id);
-        directors.sort((d1, d2) -> (int) (d1.getId() - d2.getId()));
-        film.getDirectors().addAll(directors);
-        return film;
+    public Film getFilmByIdWithoutGenresAndDirectors(Long id) {
+        String sqlQuery = "" +
+                "SELECT f.film_id, f.name, f.description, f.release_date, f.duration, f.mpa_id, mpa.name, " +
+                "       COUNT (l.user_id) rate " +
+                "FROM films f " +
+                "LEFT JOIN likes l on f.film_id = l.film_id " +
+                "JOIN mpa ON f.mpa_id = mpa.mpa_id " +
+                "WHERE f.film_id = ?";
+        return jdbcTemplate.queryForObject(sqlQuery, this::mapRowToFilm, id);
     }
 
     @Override
@@ -130,9 +125,10 @@ public class DbFilmStorage implements FilmStorage {
     }
 
     @Override
-    public List<Film> getFilmsByDirector(Long directorId, String sortBy) {
-        String sql = "" +
-                "SELECT f.film_id, f.name, f.description, f.release_date, f.duration, f.mpa_id, mpa.name, COUNT (l.user_id) " +
+    public List<Film> getFilmsByDirectorWithoutGenresAndDirectors(Long directorId, String sortBy) {
+        String sqlQuery = "" +
+                "SELECT f.film_id, f.name, f.description, f.release_date, f.duration, f.mpa_id, mpa.name, " +
+                "       COUNT (l.user_id) rate " +
                 "FROM films f " +
                 "LEFT OUTER JOIN likes l on f.film_id = l.film_id " +
                 "JOIN mpa ON f.mpa_id = mpa.mpa_id " +
@@ -142,106 +138,81 @@ public class DbFilmStorage implements FilmStorage {
                 "    WHERE director_id = ?) " +
                 "GROUP BY f.film_id ";
         if ("likes".equals(sortBy)) {
-            sql += "ORDER BY count (l.user_id) DESC";
+            sqlQuery += "ORDER BY COUNT (l.user_id) DESC";
         } else if ("year".equals(sortBy)) {
-            sql += "ORDER BY f.release_date";
+            sqlQuery += "ORDER BY f.release_date";
         }
-        List<Film> films = jdbcTemplate.query(sql, this::mapRowToFilm, directorId);
-        Map<Long, List<Genre>> genresByFilmsId = genreStorage.getGenresByFilmsId();
-        Map<Long, List<Director>> directorsByFilmsId = directorStorage.getDirectorsByFilmsId();
-        for (Film film : films) {
-            if (genresByFilmsId.get(film.getId()) != null) {
-                film.getGenres().addAll(genresByFilmsId.get(film.getId()));
-            }
-            if (directorsByFilmsId.get(film.getId()) != null) {
-                film.getDirectors().addAll(directorsByFilmsId.get(film.getId()));
-            }
-        }
-        return films;
+        return jdbcTemplate.query(sqlQuery, this::mapRowToFilm, directorId);
     }
 
     @Override
-    public List<Film> getRecommendations(Long id) {
+    public List<Map.Entry<Long, Long>> getEntriesUserIdLikedFilmId() {
         final String sqlQuery = "" +
                 "SELECT user_id, film_id " +
                 "FROM likes " +
                 "GROUP BY user_id, film_id";
-        List<Film> result = new ArrayList<>();
-
-        // Получаем список Entry с id_user (key) и id_film (value)
-        List<Map.Entry<Long, Long>> dataList = jdbcTemplate.query(sqlQuery, this::mapRowToMapEntry);
-        if (dataList.isEmpty()) return result;
-
-        // Составляем мапу данных для алгоритма
-        Map<Long, ArrayList<Long>> data = getDataMap(dataList);
-        if (data.isEmpty()) return result;
-
-        // Ищем пользователя с которым имеется максимальное количество перечений
-        Long mostIntersectionsUserId = getMostIntersectionsUserId(id, data);
-        if (mostIntersectionsUserId == null) return result;
-
-        // Получаем список фильмов-рекомендаций
-
-        for (Long otherFilmId : data.get(mostIntersectionsUserId)) {
-            if (!data.get(id).contains(otherFilmId)) {
-                result.add(this.getFilmById(otherFilmId));
-            }
-        }
-
-        return result;
+        return jdbcTemplate.query(sqlQuery, this::mapRowToMapEntry);
     }
 
+    @Override
     public List<Film> getListPopularFilm(long count) {
         final String sqlQuery = "" +
-                "SELECT f.film_id, f.name, f.description, f.release_date, f.duration, f.mpa_id, m.name " +
+                "SELECT f.film_id, f.name, f.description, f.release_date, f.duration, f.mpa_id, m.name, " +
+                "       COUNT(l.user_id) rate " +
                 "FROM films AS f " +
                 "JOIN mpa AS m ON m.mpa_id = f.mpa_id " +
                 "LEFT JOIN likes AS l ON f.film_id = l.film_id " +
                 "GROUP BY f.film_id " +
-                "ORDER BY COUNT(l.user_id) DESC " +
+                "ORDER BY rate DESC " +
                 "LIMIT ?";
         return jdbcTemplate.query(sqlQuery, this::mapRowToFilm, count);
     }
 
+    @Override
     public List<Film> getListPopularFilmSortedByYear(int count, int year) {
         final String sql = "" +
-                "SELECT f.film_id, f.name, f.description, f.release_date, f.duration, f.mpa_id, m.name " +
+                "SELECT f.film_id, f.name, f.description, f.release_date, f.duration, f.mpa_id, m.name, " +
+                "       COUNT(l.user_id) rate " +
                 "FROM films AS f " +
                 "JOIN mpa AS m ON m.mpa_id = f.mpa_id " +
                 "LEFT JOIN likes AS l ON f.film_id = l.film_id " +
                 "WHERE YEAR(f.release_date) = ? " +
                 "GROUP BY f.film_id " +
-                "ORDER BY COUNT(l.user_id) DESC " +
+                "ORDER BY rate DESC " +
                 "LIMIT ?";
         Set<Film> films = new HashSet<>(jdbcTemplate.query(sql, this::mapRowToFilm, year, count));
         return new ArrayList<>(films);
     }
 
+    @Override
     public List<Film> getListPopularFilmSortedByGenre(int count, long genreId) {
         final String sql = "" +
-                "SELECT f.film_id, f.name, f.description, f.release_date, f.duration, f.mpa_id, m.name, g.genre_id " +
+                "SELECT f.film_id, f.name, f.description, f.release_date, f.duration, f.mpa_id, m.name, g.genre_id, " +
+                "       COUNT (l.user_id) rate " +
                 "FROM films AS f " +
                 "JOIN mpa AS m ON m.mpa_id = f.mpa_id " +
                 "LEFT JOIN genres AS g ON f.film_id = g.film_id " +
                 "LEFT JOIN likes AS l ON f.film_id = l.film_id " +
                 "WHERE g.genre_id = ? " +
                 "GROUP BY f.film_id, g.genre_id " +
-                "ORDER BY COUNT(l.user_id) DESC " +
+                "ORDER BY rate DESC " +
                 "LIMIT ?";
         Set<Film> films = new HashSet<>(jdbcTemplate.query(sql, this::mapRowToFilm, genreId, count));
         return new ArrayList<>(films);
     }
 
+    @Override
     public List<Film> findPopularFilmSortedByGenreAndYear(int count, long genreId, int year) {
         final String sql = "" +
-                "SELECT f.film_id, f.name, f.description, f.release_date, f.duration, f.mpa_id, m.name, g.genre_id " +
+                "SELECT f.film_id, f.name, f.description, f.release_date, f.duration, f.mpa_id, m.name, g.genre_id," +
+                "       COUNT (l.user_id) rate " +
                 "FROM films AS f " +
                 "JOIN mpa AS m ON m.mpa_id = f.mpa_id " +
                 "LEFT JOIN genres AS g ON f.film_id = g.film_id " +
                 "LEFT JOIN likes AS l ON f.film_id = l.film_id " +
                 "WHERE g.genre_id = ? = ? AND YEAR(f.release_date) = ? " +
                 "GROUP BY f.film_id, g.genre_id " +
-                "ORDER BY COUNT(l.user_id) DESC " +
+                "ORDER BY rate DESC " +
                 "LIMIT ?";
         Set<Film> films = new HashSet<>(jdbcTemplate.query(sql, this::mapRowToFilm, genreId, year, count));
         return new ArrayList<>(films);
@@ -250,7 +221,8 @@ public class DbFilmStorage implements FilmStorage {
     @Override
     public List<Film> getCommonFilms(Long userId, Long friendId) {
         String sqlQuery = "" +
-                "SELECT f.film_id, f.name, f.description, f.release_date, f.duration, f.mpa_id, m.name " +
+                "SELECT f.film_id, f.name, f.description, f.release_date, f.duration, f.mpa_id, m.name, " +
+                "       COUNT (l.user_id) rate " +
                 "FROM films AS f " +
                 "JOIN mpa AS m ON f.mpa_id = m.mpa_id " +
                 "JOIN likes AS l on l.film_id = f.film_id " +
@@ -262,63 +234,37 @@ public class DbFilmStorage implements FilmStorage {
                 "    FROM likes " +
                 "    WHERE user_id = ?) " +
                 "GROUP BY f.film_id " +
-                "ORDER BY COUNT(l.film_id) DESC";
+                "ORDER BY rate DESC";
         return jdbcTemplate.query(sqlQuery, this::mapRowToFilm, userId, friendId);
     }
 
-
     @Override
-    public List<Film> searchFilmsWithoutGenresAndDirectorsByTitle(String query) {
-        // Получаем список данных ID фильма + Название фильма
+    public List<Map.Entry<Long, String>> searchFilmsWithoutGenresAndDirectorsByTitle(String query) {
         final String sqlQuery = "" +
                 "SELECT name, film_id " +
                 "FROM films";
-        List<Map.Entry<Long, String>> dataList = jdbcTemplate.query(sqlQuery, this::mapRowToMapEntryFilmIdFilmName);
-
-        // Производим поиск подходящих по названию id
-        List<Long> matchingIds = getMatchingIds(query, dataList);
-
-        // Получаем ответ в виде отсортированного по популярности списка
-        return getFilmsSortedByPopularity(matchingIds);
+        return jdbcTemplate.query(sqlQuery, this::mapRowToMapEntryFilmIdFilmName);
     }
 
     @Override
-    public List<Film> searchFilmsWithoutGenresAndDirectorsByDirector(String query) {
-        // Получаем список данных Имя директора + ID фильма
+    public List<Map.Entry<Long, String>> searchFilmsWithoutGenresAndDirectorsByDirector(String query) {
         final String sqlQuery = "" +
                 "SELECT dir.name AS director_name, dirs.film_id " +
                 "FROM directors AS dirs " +
                 "LEFT JOIN director AS dir ON dirs.director_id = dir.director_id";
-        List<Map.Entry<Long, String>> dataList = jdbcTemplate.query(sqlQuery, this::mapRowToMapEntryFilmIdDirectorName);
-
-        // Производим поиск подходящих id
-        List<Long> matchingIds = getMatchingIds(query, dataList);
-
-        // Получаем ответ в виде отсортированного по популярности списка
-        return getFilmsSortedByPopularity(matchingIds);
-    }
-
-    @Override
-    public List<Film> searchFilmsWithoutGenresAndDirectorsByTitleAndDirector(String query) {
-        List<Film> result = new ArrayList<>();
-        List<Film> filmsByTitle = searchFilmsWithoutGenresAndDirectorsByTitle(query);
-        List<Film> filmsByDirector = searchFilmsWithoutGenresAndDirectorsByDirector(query);
-
-        result.addAll(filmsByTitle);
-        result.addAll(filmsByDirector);
-
-        return result.stream().distinct()
-                .sorted(Comparator.comparing(Film::getRate).reversed())
-                .collect(Collectors.toList());
+        return jdbcTemplate.query(sqlQuery, this::mapRowToMapEntryFilmIdDirectorName);
     }
 
     @Override
     public void checkFilmExistsById(Long id) {
-        try {
-            getFilmById(id);
-        } catch (DataAccessException e) {
-            throw new UnknownFilmException(String.format("Film with id: %d is not found", id));
-        }
+        String sqlQuery = "" +
+                "SELECT EXISTS " +
+                "  (SELECT film_id " +
+                "   FROM films " +
+                "   WHERE film_id = ?)";
+        jdbcTemplate.query(sqlQuery, (rs) -> {
+            if (!rs.getBoolean(1)) throw new UnknownFilmException(String.format("Film with id: %d is not found", id));
+        }, id);
     }
 
     @Override
@@ -333,82 +279,35 @@ public class DbFilmStorage implements FilmStorage {
         }, id);
     }
 
-    private Film mapRowToFilm(ResultSet rs, int rowNum) throws SQLException {
-        return new Film(
-                rs.getLong("film_id"),
-                rs.getString("name"),
-                rs.getString("description"),
-                rs.getDate("release_date"),
-                rs.getLong("duration"),
-                new Mpa(
-                        rs.getLong("films.mpa_id"),
-                        rs.getString("mpa.name"))
-        );
-    }
-
-    private Map.Entry<Long, Long> mapRowToMapEntry(ResultSet rs, int rowNum) throws SQLException {
-        Long userId = rs.getLong("user_id");
-        Long filmId = rs.getLong("film_id");
-        return new AbstractMap.SimpleEntry<>(userId, filmId);
-    }
-
-    private static Map<Long, ArrayList<Long>> getDataMap(List<Map.Entry<Long, Long>> dataList) {
-        Map<Long, ArrayList<Long>> data = new HashMap<>();
-        for (Map.Entry<Long, Long> entry : dataList) {
-            Long entryKey = entry.getKey();
-            if (data.containsKey(entryKey)) {
-                Long value = entry.getValue();
-                data.get(entryKey).add(value);
-            } else {
-                data.put(entryKey, new ArrayList<>(Collections.singletonList(entry.getValue())));
-            }
-        }
-        return data;
-    }
-
-    private static Long getMostIntersectionsUserId(Long id, Map<Long, ArrayList<Long>> data) {
-        /* Мапа количества совпадений понравившихся фильмов у пользователя запросившего рекомендацию
-        и всех других пользователей, ставивших лайки. key - id пользователя, value - количество совпадений */
-
-        Map<Long, Long> frequency = new HashMap<>();
-
-        for (Map.Entry<Long, ArrayList<Long>> user : data.entrySet()) {
-            if (!user.getKey().equals(id)) {
-                Long intersectionsCount =  data.get(id)
-                        .stream()
-                        .filter((user.getValue()::contains))
-                        .count();
-                frequency.put(user.getKey(), intersectionsCount);
-            }
-        }
-
-        Optional<Map.Entry<Long, Long>> mostIntersectionsUser = frequency.entrySet()
-                .stream()
-                .max(Map.Entry.comparingByValue());
-
-        return mostIntersectionsUser.map(Map.Entry::getKey).orElse(null);
-    }
-
-    private Map.Entry<Long, String> mapRowToMapEntryFilmIdFilmName(ResultSet rs, int i) throws SQLException {
-        Long filmId = rs.getLong("film_id");
-        String name = rs.getString("name");
-
-        return new AbstractMap.SimpleEntry<>(filmId, name);
-    }
-
-    private Map.Entry<Long, String> mapRowToMapEntryFilmIdDirectorName(ResultSet rs, int i) throws SQLException {
-        Long filmId = rs.getLong("film_id");
-        String name = rs.getString("director_name");
-        return new AbstractMap.SimpleEntry<>(filmId, name);
-    }
-
-    private Film getFilmByIdWithoutGenres(Long id) {
+    @Override
+    public void checkUserLikeToFilmNotExist(Long id, Long userId) {
         String sqlQuery = "" +
-                "SELECT film_id, films.name, description, release_date, duration, films.mpa_id, mpa.name " +
-                "FROM films " +
-                "JOIN mpa ON films.mpa_id = mpa.mpa_id " +
-                "WHERE film_id = ?";
-        return jdbcTemplate.queryForObject(sqlQuery, this::mapRowToFilm, id);
+                "SELECT EXISTS " +
+                "  (SELECT user_id " +
+                "   FROM likes " +
+                "   WHERE user_id = ? " +
+                "     AND film_id = ?)";
+        jdbcTemplate.query(sqlQuery, (rs) -> {
+            if (rs.getBoolean(1)) {
+                throw new ExistsException(String.format("A user with id: %d has already liked a film with id: %d",
+                        userId, id));
+            }
+        }, userId, id);
+    }
+
+    @Override
+    public List<Film> getFilmsSortedByPopularity(List<Long> matchingIds) {
+        String inSql = String.join(",", Collections.nCopies(matchingIds.size(), "?"));
+        String sqlQuery = String.format("" +
+                "SELECT f.film_id, f.name, f.description, f.release_date, f.duration, f.mpa_id, mpa.name, " +
+                "COUNT (l.user_id) rate " +
+                "FROM films f " +
+                "LEFT JOIN likes l on f.film_id = l.film_id " +
+                "LEFT JOIN mpa ON f.mpa_id = mpa.mpa_id " +
+                "WHERE f.film_id IN (%s) " +
+                "GROUP BY f.film_id " +
+                "ORDER BY rate DESC", inSql);
+        return jdbcTemplate.query(sqlQuery, this::mapRowToFilm, matchingIds.toArray());
     }
 
     private void addGenres(Set<Genre> genres, Long id) {
@@ -431,57 +330,36 @@ public class DbFilmStorage implements FilmStorage {
         });
     }
 
-    private static List<Long> getMatchingIds(String query, List<Map.Entry<Long, String>> dataList) {
-        List<Long> matchingIds = new ArrayList<>();
-        for (Map.Entry<Long, String> entry : dataList) {
-            if (entry.getValue().toLowerCase().contains(query.toLowerCase())) {
-                matchingIds.add(entry.getKey());
-            }
-        }
-        return matchingIds;
+    private Film mapRowToFilm(ResultSet rs, int rowNum) throws SQLException {
+        return new Film(
+                rs.getLong("film_id"),
+                rs.getString("name"),
+                rs.getString("description"),
+                rs.getDate("release_date"),
+                rs.getLong("duration"),
+                rs.getLong("rate"),
+                new Mpa(
+                        rs.getLong("films.mpa_id"),
+                        rs.getString("mpa.name"))
+        );
     }
 
-    private List<Film> getFilmsSortedByPopularity(List<Long> matchingIds) {
-        String inSql = String.join(",", Collections.nCopies(matchingIds.size(), "?"));
-        String sqlQuery = String.format("" +
-                "SELECT film_id, films.name, description, release_date, duration, films.mpa_id, mpa.name " +
-                "FROM films " +
-                "LEFT JOIN mpa ON films.mpa_id = mpa.mpa_id " +
-                "WHERE film_id IN (%s)", inSql);
-
-        List<Film> result = jdbcTemplate.query(sqlQuery, this::mapRowToFilm, matchingIds.toArray());
-
-        return populateFilmsWithLikes(result);
+    private Map.Entry<Long, Long> mapRowToMapEntry(ResultSet rs, int rowNum) throws SQLException {
+        Long userId = rs.getLong("user_id");
+        Long filmId = rs.getLong("film_id");
+        return new AbstractMap.SimpleEntry<>(userId, filmId);
     }
 
-    private List<Film> populateFilmsWithLikes(List<Film> films) {
-        Map<Long, List<Long>> likesByFilmsId = this.getLikesByFilmsId();
-        for (Film film : films) {
-            if (likesByFilmsId.get(film.getId()) != null) {
-                film.getUsersIdLiked().addAll(likesByFilmsId.get(film.getId()));
-            }
-        }
-        return films.stream()
-                .sorted(Comparator.comparing(Film::getRate).reversed())
-                .collect(Collectors.toList());
+    private Map.Entry<Long, String> mapRowToMapEntryFilmIdFilmName(ResultSet rs, int i) throws SQLException {
+        Long filmId = rs.getLong("film_id");
+        String name = rs.getString("name");
+        return new AbstractMap.SimpleEntry<>(filmId, name);
     }
 
-    private Map<Long, List<Long>> getLikesByFilmsId() {
-        String sqlQuery = "" +
-                "SELECT film_id, user_id " +
-                "FROM likes";
-        return jdbcTemplate.query(sqlQuery, this::extractLikesByFilmId);
-    }
-
-    private Map<Long, List<Long>> extractLikesByFilmId(ResultSet rs) throws SQLException {
-        Map<Long, List<Long>> likesByFilmId = new LinkedHashMap<>();
-        while (rs.next()) {
-            Long filmId = rs.getLong("film_id");
-            Long userId = rs.getLong("user_id");
-            likesByFilmId.putIfAbsent(filmId, new ArrayList<>());
-            likesByFilmId.get(filmId).add(userId);
-        }
-        return likesByFilmId;
+    private Map.Entry<Long, String> mapRowToMapEntryFilmIdDirectorName(ResultSet rs, int i) throws SQLException {
+        Long filmId = rs.getLong("film_id");
+        String name = rs.getString("director_name");
+        return new AbstractMap.SimpleEntry<>(filmId, name);
     }
 }
 

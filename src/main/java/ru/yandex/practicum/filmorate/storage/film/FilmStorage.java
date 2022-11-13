@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.storage.film;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.util.List;
+import java.util.Map;
 
 public interface FilmStorage {
     /**
@@ -28,7 +29,7 @@ public interface FilmStorage {
      * @return список фильмов без заполненных
      * жанров.
      */
-    List<Film> getFilmsWithoutGenres();
+    List<Film> getFilmsWithoutGenresAndDirectors();
 
     /**
      * Метод добавляет в хранилище лайк.
@@ -52,7 +53,7 @@ public interface FilmStorage {
      * @param id идентификатор фильма.
      * @return Фильм, принадлежащий идентификатору.
      */
-    Film getFilmById(Long id);
+    Film getFilmByIdWithoutGenresAndDirectors(Long id);
 
     /**
      * Метод удаляет фильм из хранилища по его
@@ -72,28 +73,16 @@ public interface FilmStorage {
      * @return Список фильмов, связанный с режиссёром
      * и отсортированный по параметру сортировки.
      */
-    List<Film> getFilmsByDirector(Long directorId, String sortBy);
+    List<Film> getFilmsByDirectorWithoutGenresAndDirectors(Long directorId, String sortBy);
 
     /**
-     * Метод возвращает список рекомендованных
-     * фильмов по идентификатору пользователя.
-     * Рекомендация определяется по следующему
-     * алгоритму:
-     * <ol>
-     *   <li>
-     *     Находится пользователь с максимально похожим
-     *     вкусом.
-     *   </li>
-     *   <li>
-     *     У найденного пользователя определяются фильмы,
-     *     которые ещё не смотрел первый пользователь
-     *   </li>
-     * </ol>
+     * Метод возвращает список всех пар id пользователя и
+     * id фильма, которому пользователь поставил лайк
      *
-     * @param id идентификатор пользователя.
-     * @return Список рекомендованных фильмов.
+     * @return Список пар id пользователя и
+     * id фильма, которому пользователь поставил лайк
      */
-    List<Film> getRecommendations(Long id);
+    List<Map.Entry<Long, Long>> getEntriesUserIdLikedFilmId();
 
     /**
      * Метод возвращает список популярных
@@ -162,7 +151,7 @@ public interface FilmStorage {
      * @param query текст для поиска.
      * @return Список фильмов, найденных по названию.
      */
-    List<Film> searchFilmsWithoutGenresAndDirectorsByTitle(String query);
+    List<Map.Entry<Long, String>> searchFilmsWithoutGenresAndDirectorsByTitle(String query);
 
     /**
      * Метод возвращает список фильмов, найденных
@@ -171,17 +160,7 @@ public interface FilmStorage {
      * @param query текст для поиска.
      * @return Список фильмов, найденных по режиссёру.
      */
-    List<Film> searchFilmsWithoutGenresAndDirectorsByDirector(String query);
-
-    /**
-     * Метод возвращает список фильмов, найденных
-     * по названию и режиссёру.
-     *
-     * @param query текст для поиска.
-     * @return Список фильмов, найденных по названию
-     * и режиссёру.
-     */
-    List<Film> searchFilmsWithoutGenresAndDirectorsByTitleAndDirector(String query);
+    List<Map.Entry<Long, String>> searchFilmsWithoutGenresAndDirectorsByDirector(String query);
 
     /**
      * Метод проверяет наличие фильма
@@ -198,4 +177,23 @@ public interface FilmStorage {
      * @param id идентификатор фильма.
      */
     void checkFilmNotExistById(Long id);
+
+    /**
+     * Метод проверяет отсутствие лайка
+     * фильма в хранилище.
+     *
+     * @param id идентификатор пользователя,
+     *           поставившего лайк.
+     */
+    void checkUserLikeToFilmNotExist(Long id, Long userId);
+
+    /**
+     * Метод возвращает список фильмов.
+     *
+     * @param matchingIds список id
+     *                    запрошенных фильмов.
+     * @return Список фильмов по
+     * запрошенным id.
+     */
+    List<Film> getFilmsSortedByPopularity(List<Long> matchingIds);
 }
