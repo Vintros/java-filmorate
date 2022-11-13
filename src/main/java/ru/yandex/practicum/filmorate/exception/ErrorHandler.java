@@ -14,15 +14,14 @@ import java.util.Objects;
 @Slf4j
 public class ErrorHandler {
 
-    @ExceptionHandler({UnknownFilmException.class, UnknownUserException.class, UnknownGenreException.class,
-            UnknownMpaException.class})
+    @ExceptionHandler({UnknownEntityException.class})
     @ResponseStatus(value = HttpStatus.NOT_FOUND)
     public ErrorResponse handleNotFound(final RuntimeException e) {
         log.error(e.getMessage());
         return new ErrorResponse(e.getMessage());
     }
 
-    @ExceptionHandler(value = {ExistsException.class, ValidationException.class})
+    @ExceptionHandler(value = {ExistsException.class, ValidationException.class, IncorrectSearchParameterException.class})
     @ResponseStatus(value = HttpStatus.BAD_REQUEST)
     public ErrorResponse handleAlreadyExists(final RuntimeException e) {
         log.error(e.getMessage());

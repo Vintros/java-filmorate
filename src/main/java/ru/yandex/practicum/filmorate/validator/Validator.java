@@ -1,71 +1,33 @@
 package ru.yandex.practicum.filmorate.validator;
 
-import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.*;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
-
-import java.time.LocalDate;
-import java.sql.Date;
 
 @Service
 public class Validator {
 
-    private static final Date MOVIE_BIRTHDAY = Date.valueOf(LocalDate.of(1895, 12, 28));
-    private static FilmStorage filmStorage;
-    private static UserStorage userStorage;
-
-    public Validator(FilmStorage filmStorage, UserStorage userStorage) {
-        Validator.filmStorage = filmStorage;
-        Validator.userStorage = userStorage;
-    }
-
-    public static void validateUser(Long id) {
-        try {
-            userStorage.getUserById(id);
-        } catch (DataAccessException e) {
-            throw new UnknownUserException(String.format("Пользователь с id: %d не найден", id));
-        }
-    }
-
-    public static void validateUserNotExist(User user) {
-        if (user.getId() != null && userStorage.getUserById(user.getId()) != null) {
-            throw new ExistsException("Пользователь уже зарегистрирован");
-        }
-    }
-
-    public static void validateFilm(Long id) {
-        try {
-            filmStorage.getFilmById(id);
-        } catch (DataAccessException e) {
-            throw new UnknownFilmException(String.format("Фильм с id: %d не найден", id));
-        }
-    }
-
-    public static void validateFilmDate(Film film) {
-        if (film.getReleaseDate().before(MOVIE_BIRTHDAY)) {
-            throw new ValidationException("Ошибка валидации, дата релиза раньше 28 декабря 1895 года");
-        }
-    }
-
-    public static void validateFilmNotExist(Film film) {
-        if (film.getId() != null && filmStorage.getFilmById(film.getId()) != null) {
-            throw new ExistsException("Фильм уже зарегистрирован");
-        }
-    }
-
     public static void validateGenreId(Long id) {
         if (id < 1 || id > 6) {
-            throw new UnknownGenreException("Такой жанр не существует");
+            throw new UnknownGenreException("Genre with id: %d does not exist");
         }
     }
 
     public static void validateMpaId(Long id) {
         if (id < 1 || id > 5) {
-            throw new UnknownMpaException("Такая категория не существует");
+            throw new UnknownMpaException("MPA with id: %d does not exist");
+        }
+    }
+
+    public static void validateGenreAndYear(Integer genreId, Integer year) {
+        if (year != null && year < 1895 || genreId != null && genreId <= 0) {
+            throw new RuntimeException("Incorrect request");
+        }
+    }
+
+    public static void validateSearchParameter(String by) {
+        if (!by.equals("title") && !by.equals("director") && !by.equals("title,director") && !by.equals("director,title")) {
+            throw new IncorrectSearchParameterException("An incorrect search parameter has been entered. Available values: " +
+                    "title; director, title,director; director,title");
         }
     }
 }

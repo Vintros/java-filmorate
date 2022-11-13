@@ -1,36 +1,46 @@
 package ru.yandex.practicum.filmorate.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
+import ru.yandex.practicum.filmorate.validator.annotation.AfterCinemaBirthday;
 
 import javax.validation.constraints.*;
 import java.sql.Date;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
 
 @Data
 @AllArgsConstructor
-@RequiredArgsConstructor
 @NoArgsConstructor
-@EqualsAndHashCode(exclude = {"mpa", "genres", "usersIdLiked"})
+@RequiredArgsConstructor
+@EqualsAndHashCode(exclude = {"mpa", "genres"})
 public class Film {
 
     private Long id;
+
     @NonNull
-    @NotBlank(message = "Пустое поле названия фильма")
+    @NotBlank(message = "Empty film title field")
     private String name;
+
     @NonNull
-    @Size(max = 200, message = "Описание должно быть не более 200 символов")
+    @Size(max = 200, message = "The description should contain no more than 200 characters")
     private String description;
+
     @NonNull
-    @PastOrPresent(message = "Некорректная дата фильма")
+    @AfterCinemaBirthday
     private Date releaseDate;
+
     @NonNull
     @Positive
     private Long duration;
+
+    private Long rate;
+
     @NonNull
     private Mpa mpa;
-    private final Set<Genre> genres = new HashSet<>();
-    @JsonIgnore
-    private final Set<Long> usersIdLiked = new HashSet<>();
+
+    private final Set<Genre> genres = new TreeSet<>(Comparator.comparingLong(Genre::getId));
+
+    private final Set<Director> directors = new HashSet<>();
 }

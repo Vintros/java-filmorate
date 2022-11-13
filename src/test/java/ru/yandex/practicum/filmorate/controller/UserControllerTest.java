@@ -3,11 +3,15 @@ package ru.yandex.practicum.filmorate.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
+import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.sql.Date;
@@ -19,6 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@AutoConfigureTestDatabase
 class UserControllerTest {
 
     @Autowired
@@ -368,4 +373,60 @@ class UserControllerTest {
                 .andExpect(jsonPath("$").isEmpty());
     }
 
+    @Test
+    @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
+    public void shouldReturn200andListOnGetRecommendationsWhenValidRequest() throws Exception {
+        User user1 = new User("user1@mail.ru", "login1", Date.valueOf(LocalDate.of(1946, 8, 20)));
+        User user2 = new User("user2@mail.ru", "login2", Date.valueOf(LocalDate.of(1946, 8, 20)));
+        User user3 = new User("user3@mail.ru", "login3", Date.valueOf(LocalDate.of(1946, 8, 20)));
+        Film film1 = new Film("Name 1", "Description Film 1", Date.valueOf(LocalDate.of(2000, 1, 1)), 200L, new Mpa(1L, null));
+        Film film2 = new Film("Name 2", "Description Film 2", Date.valueOf(LocalDate.of(2000, 1, 1)), 200L, new Mpa(1L, null));
+        Film film3 = new Film("Name 3", "Description Film 3", Date.valueOf(LocalDate.of(2000, 1, 1)), 200L, new Mpa(1L, null));
+        Film film4 = new Film("Name 4", "Description Film 4", Date.valueOf(LocalDate.of(2000, 1, 1)), 200L, new Mpa(1L, null));
+
+        postUser(user1);
+        postUser(user2);
+        postUser(user3);
+
+        postFilm(film1);
+        postFilm(film2);
+        postFilm(film3);
+        postFilm(film4);
+
+        likeFilm(1L,1L);
+        likeFilm(2L,1L);
+        likeFilm(1L,2L);
+        likeFilm(2L,2L);
+        likeFilm(3L,2L);
+        likeFilm(4L,2L);
+        likeFilm(3L,3L);
+
+        mockMvc.perform(get("/users/{id}/recommendations", 1))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].id").value(3))
+                .andExpect(jsonPath("$[0].name").value("Name 3"))
+                .andExpect(jsonPath("$[1].id").value(4))
+                .andExpect(jsonPath("$[1].name").value("Name 4"));
+    }
+
+    private void postUser(User user) throws Exception {
+        mockMvc.perform(
+                post("/users")
+                        .content(objectMapper.writeValueAsString(user))
+                        .contentType(MediaType.APPLICATION_JSON)
+        );
+    }
+
+    private void postFilm(Film film) throws Exception {
+        mockMvc.perform(
+                post("/films")
+                        .content(objectMapper.writeValueAsString(film))
+                        .contentType(MediaType.APPLICATION_JSON)
+        );
+    }
+
+    private void likeFilm(Long filmId, Long userId) throws Exception {
+        mockMvc.perform(put("/films/{id}/like/{userId}", filmId, userId));
+    }
 }

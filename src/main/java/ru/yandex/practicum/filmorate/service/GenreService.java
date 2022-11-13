@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -11,22 +12,19 @@ import static ru.yandex.practicum.filmorate.validator.Validator.validateGenreId;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class GenreService {
 
     private final GenreStorage genreStorage;
 
-    public GenreService(GenreStorage genreStorage) {
-        this.genreStorage = genreStorage;
-    }
-
     public List<Genre> getAllGenres() {
-        log.info("Запрошены все жанры");
+        log.info("All genres are requested");
         return genreStorage.getAllGenres();
     }
 
     public Genre getGenreById(Long id) {
         validateGenreId(id);
-        log.info("Запрошен жанр с id: {}", id);
+        log.info("The genre with id: {} is requested", id);
         return genreStorage.getGenreById(id);
     }
 }

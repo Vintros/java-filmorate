@@ -11,21 +11,26 @@ import java.util.Set;
 
 @Data
 @AllArgsConstructor
-@RequiredArgsConstructor
 @NoArgsConstructor
+@RequiredArgsConstructor
 @EqualsAndHashCode(exclude = {"friends"})
 public class User {
 
     private Long id;
+
     private String name;
-    @Email(message = "Некорректная почта")
+
+    @Email(message = "Incorrect email")
     @NonNull
     private String email;
+
     @NonNull
-    @Pattern(regexp = "\\A\\S+\\Z", message = "Ошибка валидации, пустой логин или пробельные символы в логине пользователя")
+    @Pattern(regexp = "\\A\\S+\\Z", message = "Validation error, empty login or whitespace characters in the user login")
     private String login;
+
     @NonNull
-    @PastOrPresent(message = "Некорректная дата рождения")
+    @PastOrPresent(message = "Incorrect date of birth")
     private Date birthday;
+
     private final Set<User> friends = new HashSet<>();
 }
