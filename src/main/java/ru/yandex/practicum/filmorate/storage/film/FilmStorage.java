@@ -195,5 +195,5 @@ public interface FilmStorage {
      * @return Список фильмов по
      * запрошенным id.
      */
-    List<Film> getFilmsSortedByPopularity(List<Long> matchingIds); //todo
+    List<Film> getFilmsSortedByPopularity(List<Long> matchingIds);
 }
